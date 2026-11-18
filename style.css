@@ -1,0 +1,734 @@
+/*
+  INODERECORDS, records in stock.
+
+  THE SPECIMEN SHEET. One record on screen at a time, centre stage, examined
+  like a type specimen examines a glyph: the object is the subject, and every
+  piece of text around it is either that object's data or the instrument's
+  chrome. The reference is the specimen page of this page's own typeface
+  (typographic.systems/obel-mono), which presents one giant object annotated
+  by tiny technical readouts, all in a single voice.
+
+  ONE TYPEFACE. Obel Mono carries the entire page: wordmark, display, data,
+  body, footer. It is a nine-weight variable font and weight is the only
+  hierarchy axis, with size and tracking behind it. The previous build spoke
+  in four families (a serif for artist names, two extra monos for labels and
+  the wordmark) and read as four sites pasted together. Hierarchy by weight
+  inside one family is what makes a dense page cohere.
+
+  STRUCTURE FROM PUNCTUATION, NOT BOXES. ( brackets ), slashes and middle
+  dots do the separating. No chips, no boxed arrows, no border-organized
+  sections: the brand rule is that hairlines are trajectories and leaders,
+  never walls. The one dotted rule in the crate list is a data leader, which
+  the house spec explicitly allows.
+
+  TWO LAYOUTS LIVE IN HERE.
+
+    default          Every record stacked down the page with its cover. This
+                     is what you get with no JavaScript, and it is complete:
+                     every price, every button, the whole shelf.
+
+    .has-crate       crate.js got through, so the same markup becomes a
+                     single screen with the stage in the middle.
+
+  The default is written first and the crate rules only rearrange it. That
+  order matters: a failure leaves a working shop rather than a half-built one.
+
+  Palette from the main repo's DESIGN.md: paper on ink, zero radius,
+  #2400ff as interference only (selection, the shader's resolve front, the
+  boot's last line). It is never chrome: no blue buttons, no blue numbers.
+*/
+
+/*
+  Obel Mono, by Cody Collier at Typographic Systems, under the SIL Open Font
+  License 1.1 (fonts/ObelMono-OFL.txt). Its own README calls it "a monospaced
+  typeface for terminals, code and agents", which is this shop's identity
+  described by somebody who had never heard of it.
+
+  ONE file, nine weights: the variable font, subset to Latin by font.py.
+  Declaring the range as `100 900` is what lets the browser interpolate
+  instead of synthesising a fake bold out of the regular.
+
+  No italic is loaded, because nothing here is italic.
+*/
+@font-face {
+  font-family: 'Obel Mono'; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url('fonts/obel-mono-latin-vf.woff2') format('woff2');
+}
+
+:root {
+  --ink: #0a0a0a;
+  --paper: #f4f3ef;
+  --blue: #2400ff;
+
+  --fg: var(--paper);
+  --bg: var(--ink);
+  --dim: rgba(244, 243, 239, .58);
+  --faint: rgba(244, 243, 239, .30);
+  --ghost: rgba(244, 243, 239, .14);
+
+  --mono: 'Obel Mono', ui-monospace, 'Cascadia Mono', Menlo, monospace;
+
+  /*
+    The whole type ramp. Six stops, nothing ad hoc: every text element on the
+    page uses one of these with its paired weight and tracking, which is the
+    discipline the old sheet lacked.
+
+      hud      10px 500 +.14em   chrome: header facts, rails, footer, counter
+      note     11.5px 500 +.12em  annotations: tags line, variant
+      body     13.5px 400         the one human sentence per record
+      album    15-17px 300 +.10em the album title
+      artist   26-42px 800 +.03em the display line
+      price    24-30px 700        the number
+  */
+  --t-hud: .625rem;
+  --t-note: .72rem;
+  --t-body: .845rem;
+  --t-album: clamp(.9rem, .82rem + .4vw, 1.06rem);
+  --t-artist: clamp(1.6rem, 1.1rem + 2.4vw, 2.65rem);
+  --t-price: clamp(1.5rem, 1.25rem + 1vw, 1.9rem);
+
+  --ls-hud: .14em;
+  --ls-note: .12em;
+  --ls-album: .10em;
+  --ls-artist: .03em;
+
+  --pad: clamp(16px, 4vw, 48px);
+  --d: 140ms;
+}
+
+*, *::before, *::after { box-sizing: border-box; border-radius: 0; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+/*
+  The void is void. The previous sheet burned a 72px graticule into the
+  background; on a phone it read as a page of empty boxes behind the one
+  object that matters. The record floats in black, textured only by the
+  scanline film, and the dither in the stage is the page's texture.
+*/
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--mono);
+  font-size: clamp(.92rem, .88rem + .18vw, 1rem);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection { background: var(--blue); color: var(--paper); }
+a { color: inherit; }
+
+:focus-visible { outline: 2px solid var(--paper); outline-offset: 3px; }
+
+.sr {
+  position: absolute;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.scan {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    to bottom, rgba(244, 243, 239, .04) 0 1px, transparent 1px 3px);
+}
+
+/* registration marks at the corners of the window. Marks, never a border: a
+   rule all the way round would box the page, which is the one thing the
+   style spec will not have. */
+.frame { position: fixed; inset: 0; z-index: 45; pointer-events: none; }
+.frame i { position: absolute; width: 16px; height: 16px; opacity: .38; }
+.frame i:nth-child(1) { top: 10px; left: 10px; border-top: 1px solid var(--paper); border-left: 1px solid var(--paper); }
+.frame i:nth-child(2) { top: 10px; right: 10px; border-top: 1px solid var(--paper); border-right: 1px solid var(--paper); }
+.frame i:nth-child(3) { bottom: 10px; left: 10px; border-bottom: 1px solid var(--paper); border-left: 1px solid var(--paper); }
+.frame i:nth-child(4) { bottom: 10px; right: 10px; border-bottom: 1px solid var(--paper); border-right: 1px solid var(--paper); }
+@media (max-width: 680px) { .frame { display: none; } }
+
+/* ── bar ────────────────────────────────────────────────────────────── */
+/*
+  Two things and air: the name, and the way to reach us. The stock facts
+  moved to the footer's data strip, where counts belong; a header holding
+  the brand, a dashboard and a button was three voices in one line.
+*/
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(12px, 3vw, 28px);
+  padding: 15px var(--pad) 13px;
+}
+
+.bar__name {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  font-size: .8rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+}
+
+/* the disc glyph is the O: the mark and the name are one word */
+.bar__o {
+  width: .74em;
+  height: .74em;
+  margin: 0 .14em;
+  align-self: center;
+  transform: translateY(.02em);
+}
+.bar__o circle { stroke: currentColor; }
+.bar__o .bar__o-dot { fill: currentColor; stroke: none; }
+
+.bar__cta {
+  font-size: var(--t-hud);
+  font-weight: 500;
+  letter-spacing: var(--ls-hud);
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--dim);
+  padding: 6px 0;
+  white-space: nowrap;
+  transition: color var(--d) steps(2);
+}
+.bar__cta:hover, .bar__cta:focus-visible { color: var(--paper); }
+
+/* ── the default layout: every record, stacked ──────────────────────── */
+
+.shop { padding: 0 var(--pad); }
+
+.crate__stage { display: none; }
+.crate__nav { display: none; }
+
+.crate__list {
+  list-style: none;
+  margin: 0 auto;
+  padding: 0;
+  max-width: 820px;
+}
+
+/* separation is space and the index line, not a rule: borders between
+   records would shelve them, and the brand does not box */
+.rec { padding: clamp(30px, 6vw, 56px) 0; }
+
+.rec__still {
+  display: block;
+  width: 100%;
+  max-width: 340px;
+  height: auto;
+  margin-bottom: 22px;
+}
+
+.rec__idx {
+  margin: 0 0 12px;
+  font-size: var(--t-hud);
+  font-weight: 500;
+  letter-spacing: var(--ls-hud);
+  color: var(--faint);
+}
+
+/* ( LP / SEALED / ONLY 1 ) · one annotation line, structured by slashes.
+   These were three boxed chips; the boxes organized nothing. */
+.rec__tags {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 0 1em;
+  font-size: var(--t-note);
+  font-weight: 500;
+  letter-spacing: var(--ls-note);
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.rec__tags::before { content: '( '; white-space: pre; color: var(--faint); }
+.rec__tags::after { content: ' )'; white-space: pre; color: var(--faint); }
+.tag { white-space: nowrap; }
+.tag + .tag::before { content: ' / '; white-space: pre; color: var(--faint); }
+.tag--on { color: var(--paper); font-weight: 700; }
+
+.rec__artist {
+  margin: 0;
+  font-size: var(--t-artist);
+  font-weight: 800;
+  letter-spacing: var(--ls-artist);
+  text-transform: uppercase;
+  line-height: 1.06;
+}
+
+.rec__album {
+  margin: .3em 0 0;
+  font-size: var(--t-album);
+  font-weight: 300;
+  letter-spacing: var(--ls-album);
+  text-transform: uppercase;
+  color: rgba(244, 243, 239, .92);
+}
+
+.rec__variant {
+  margin: .75em 0 0;
+  font-size: var(--t-note);
+  font-weight: 500;
+  letter-spacing: var(--ls-note);
+  text-transform: uppercase;
+  line-height: 1.7;
+  color: var(--dim);
+}
+
+/* the one human sentence: the only lower-case voice on the page */
+.rec__hook {
+  margin: .8em 0 0;
+  font-size: var(--t-body);
+  line-height: 1.65;
+  color: rgba(244, 243, 239, .72);
+  max-width: 52ch;
+}
+
+.rec__buy {
+  margin: 1.5em 0 0;
+  display: flex;
+  align-items: center;
+  gap: clamp(16px, 3vw, 28px);
+  flex-wrap: wrap;
+}
+
+.rec__amt {
+  font-size: var(--t-price);
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.rec__each {
+  font-size: var(--t-hud);
+  font-weight: 500;
+  letter-spacing: var(--ls-hud);
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-left: clamp(-14px, -1.2vw, -6px);
+}
+
+/* ── buttons ────────────────────────────────────────────────────────── */
+
+.btn {
+  display: inline-block;
+  padding: .9em 1.7em;
+  border: 1px solid var(--paper);
+  font-family: var(--mono);
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: var(--ls-hud);
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  color: var(--fg);
+  background: none;
+  transition: background var(--d) steps(2), color var(--d) steps(2);
+}
+.btn:hover, .btn:focus-visible { background: var(--paper); color: var(--ink); }
+
+/* the one thing on the page you are meant to press: a solid paper block.
+   Hover inverts within the 1-bit pair; it never turns blue, because blue is
+   interference and a button is chrome. */
+.btn--buy { background: var(--paper); color: var(--ink); padding: 1em 2em; }
+.btn--buy:hover, .btn--buy:focus-visible { background: var(--ink); color: var(--paper); }
+
+/* ── the crate: one record, centre stage ────────────────────────────── */
+/*
+  Only from here down does the page become a single screen, and only once
+  crate.js has said it got through.
+*/
+
+.has-crate, .has-crate body { height: 100vh; height: 100dvh; overflow: hidden; }
+
+.has-crate body {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  /* the one column must be the viewport, not max-content: an unwrappable
+     line in the footer would otherwise size the track and silently push
+     the whole page past the right edge */
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.has-crate .shop { min-height: 0; display: grid; padding: 0; }
+
+.has-crate .crate {
+  min-height: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+/* the stage */
+.has-crate .crate__stage {
+  display: block;
+  position: relative;
+  min-height: 0;
+  touch-action: pan-y;
+  cursor: grab;
+  /* dragging the crate should move the crate, not sweep a text selection
+     across the record's name underneath it */
+  user-select: none;
+  -webkit-user-select: none;
+}
+.has-crate .crate__stage.is-dragging { cursor: grabbing; }
+
+.crate__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  /* No image-rendering override. The canvas is sized to the display's real
+     pixels, so there is nothing being upscaled to have an opinion about.
+     The dither stays chunky because the shader sizes its own cell, not
+     because the canvas is small. */
+  opacity: 0;
+  transition: opacity 240ms steps(4);
+}
+.crate[data-live="yes"] .crate__canvas { opacity: 1; }
+
+/* no shader: the stage shows the finished dither, flipping the same way */
+.crate__still {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  max-width: min(62%, 60vh);
+  max-height: 76%;
+  width: auto; height: auto;
+}
+
+/* the deck: everything known about whatever is in front of you */
+.has-crate .crate__deck {
+  position: relative;
+  padding: 0 var(--pad) clamp(10px, 2vh, 20px);
+  display: grid;
+  gap: clamp(8px, 1.6vh, 14px);
+  justify-items: center;
+}
+
+.has-crate .crate__list {
+  display: grid;
+  max-width: 760px;
+  width: 100%;
+}
+
+/* every record occupies the same cell; one is shown. They stay in the
+   document so a crawler and a copy-paste still get the whole shelf. */
+.has-crate .rec {
+  grid-area: 1 / 1;
+  padding: 0;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 130ms steps(3), visibility 0s linear 130ms;
+}
+.has-crate .rec.is-on {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 130ms steps(3);
+}
+
+.has-crate .rec__still { display: none; }
+.has-crate .rec__idx { display: none; }
+.has-crate .rec__tags { justify-content: center; margin-bottom: .55em; }
+.has-crate .rec__hook { margin-left: auto; margin-right: auto; }
+/* pinned to the cell's floor: the price and the button sit at the same
+   height for every record, so flipping the crate never bounces the one
+   row you are about to press */
+.has-crate .rec__buy { justify-content: center; margin-top: auto; padding-top: 1em; }
+
+/* Two lines, hard capped. Every record gets the same deck height whatever
+   its hook says, so the stage above does not resize as you flip: a record
+   that jumps a centimetre when you reach the next one reads as a bug. */
+.has-crate .rec__hook {
+  margin-top: .6em;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  min-height: 2.8em;
+}
+
+/* On a single screen the hook is the first thing worth losing. */
+@media (max-height: 800px), (max-width: 760px) {
+  .has-crate .rec__hook { display: none; }
+}
+@media (max-height: 680px) {
+  .has-crate .rec__variant { display: none; }
+  .has-crate .rec__tags { display: none; }
+}
+
+/* ── the readouts beside the deck ───────────────────────────────────── */
+/*
+  Instrument annotation, the way a specimen sheet pins metrics beside the
+  glyph. Wide screens only: the centre column is the subject and these are
+  marginalia, so they go before anything else does.
+
+  LEFT: provenance. The photo-only house rule, stated where the eye is:
+  whether the disc you are looking at is a photograph of this pressing. On a
+  page asking a stranger for money, that line works harder than any slogan.
+
+  RIGHT: the crate itself, as a tracklist. The five records with dotted
+  leaders to their prices, current one lit. It is the position indicator,
+  the shelf overview and direct navigation in one object; on narrow screens
+  the same markup collapses back to bare spines.
+*/
+.crate__prov {
+  position: absolute;
+  left: var(--pad);
+  top: 4px;
+  margin: 0;
+  display: none;
+  text-align: left;
+  font-size: var(--t-hud);
+  font-weight: 500;
+  letter-spacing: var(--ls-hud);
+  text-transform: uppercase;
+  line-height: 1.9;
+}
+.crate__prov span { display: block; color: var(--paper); }
+.crate__prov span + span { color: var(--faint); }
+
+.crate__dots {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 7px;
+  display: flex;
+  align-items: flex-end;
+  gap: 7px;
+  position: relative;
+}
+
+/* the rail the spines stand on */
+.crate__dots::after {
+  content: '';
+  position: absolute;
+  left: -8px; right: -8px; bottom: 0;
+  height: 1px;
+  background: var(--ghost);
+}
+
+.crate__dots button {
+  display: block;
+  padding: 10px 2px 4px;      /* a real touch target around a 3px mark */
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+.crate__dots button i {
+  display: block;
+  width: 3px;
+  height: 13px;
+  background: var(--dim);
+  transition: height var(--d) steps(3), background var(--d) steps(2);
+}
+.crate__dots button:hover i { background: var(--paper); height: 19px; }
+.crate__dots .is-on button i { height: 26px; background: var(--paper); }
+
+/* the list's text lives in the markup for every width; only a wide screen
+   shows it */
+.crate__dots .crate__ix,
+.crate__dots .crate__who,
+.crate__dots .crate__lead,
+.crate__dots .crate__px { display: none; }
+
+@media (min-width: 1240px) {
+  .crate__prov { display: block; }
+
+  .crate__dots {
+    position: absolute;
+    right: var(--pad);
+    top: 0;
+    display: block;
+    width: 240px;
+    padding: 0;
+  }
+  .crate__dots::after { display: none; }
+  .crate__dots button i { display: none; }
+
+  .crate__dots button {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    width: 100%;
+    padding: 3px 0;
+    font-size: var(--t-hud);
+    font-weight: 500;
+    letter-spacing: var(--ls-hud);
+    text-transform: uppercase;
+    color: var(--faint);
+    text-align: left;
+    transition: color var(--d) steps(2);
+  }
+  .crate__dots button:hover { color: var(--paper); }
+  .crate__dots .is-on button { color: var(--paper); }
+  .crate__dots .is-on button .crate__ix { font-weight: 700; }
+
+  .crate__dots .crate__ix { display: inline; }
+  .crate__dots .crate__who {
+    display: inline-block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+  .crate__dots .crate__lead {
+    display: block;
+    flex: 1;
+    border-bottom: 1px dotted var(--ghost);
+    transform: translateY(-3px);
+    min-width: 12px;
+  }
+  .crate__dots .is-on button .crate__lead { border-bottom-style: solid; border-color: var(--faint); }
+  .crate__dots .crate__px { display: inline; font-variant-numeric: tabular-nums; }
+}
+
+/* ── the transport: arrows and the counter ──────────────────────────── */
+
+.has-crate .crate__nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(10px, 2.4vw, 22px);
+}
+
+/* a bare glyph with a real hit area; the box around it said nothing */
+.crate__arrow {
+  width: 48px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--dim);
+  font-family: var(--mono);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: color var(--d) steps(2);
+}
+.crate__arrow:hover, .crate__arrow:focus-visible { color: var(--paper); }
+.crate__arrow[disabled] { color: var(--ghost); cursor: default; }
+
+/* a phone's only pointer is a thumb: the arrows are the one visible control,
+   so they stand up for themselves */
+@media (hover: none), (pointer: coarse), (max-width: 760px) {
+  .crate__arrow { width: 54px; height: 48px; font-size: 1.4rem; color: var(--paper); }
+}
+
+.crate__pos {
+  display: none;
+  margin: 0;
+  font-size: var(--t-hud);
+  font-weight: 500;
+  letter-spacing: var(--ls-hud);
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.crate__pos [data-pos] { color: var(--paper); font-weight: 700; }
+
+/* wide screens: the spines have become the list at the right, so the
+   counter takes their place between the arrows */
+@media (min-width: 1240px) {
+  .crate__pos { display: block; }
+}
+
+/* ── foot ───────────────────────────────────────────────────────────── */
+/*
+  A data strip, not a document: the specimen sheet ends in one line of
+  facts. Two quiet rows, same voice as every other readout, no rule above
+  them and nothing blue.
+*/
+.foot {
+  padding: clamp(12px, 2.2vh, 20px) var(--pad);
+  display: grid;
+  gap: 7px;
+}
+
+.foot__how,
+.foot__line {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 20px;
+  font-size: var(--t-hud);
+  font-weight: 500;
+  letter-spacing: var(--ls-hud);
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.foot__how { counter-reset: step; }
+.foot__how span { display: flex; align-items: baseline; gap: 8px; counter-increment: step; }
+.foot__how span::before { content: '0' counter(step); color: var(--faint); font-weight: 700; }
+
+.foot__line { color: var(--faint); }
+
+/* On a short screen the steps are the first thing to go: somebody who has
+   got this far on a phone is looking at the record, not reading process. */
+@media (max-height: 740px), (max-width: 560px) {
+  .has-crate .foot__how { display: none; }
+}
+
+/* A narrow window wraps the strip into a stack, which is more footer than
+   stage. Shed the attribution lines first, then everything past shipping;
+   it all still ships in the no-JS layout and in the page source. */
+@media (max-width: 1240px) {
+  .has-crate .foot__line span:nth-child(n+6) { display: none; }
+}
+@media (max-height: 640px), (max-width: 760px) {
+  .has-crate .foot__line span:nth-child(n+4) { display: none; }
+}
+
+/* ── the boot ───────────────────────────────────────────────────────── */
+/*
+  Built by boot.js, never written into the markup: markup would strand a
+  black screen over the shop for anyone the script never reaches.
+*/
+.is-booting { overflow: hidden; }
+
+.boot {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: var(--bg);
+  color: var(--fg);
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 2px;
+  padding: var(--pad);
+  font-size: clamp(.72rem, 1.3vw, .95rem);
+  font-weight: 500;
+  letter-spacing: var(--ls-hud);
+  text-transform: uppercase;
+  line-height: 2.1;
+}
+
+.boot__line { margin: 0; }
+/* the one blue moment outside the shader: interference in the carrier,
+   not chrome */
+.boot__line--on { color: var(--blue); }
+
+.boot__rule { width: min(42vw, 320px); height: 1px; background: var(--ghost); margin-top: 14px; }
+
+.boot--out { animation: bootout 400ms steps(5) forwards; }
+@keyframes bootout { to { opacity: 0; visibility: hidden; } }
+
+/* ── reduced motion ─────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+  .scan { display: none; }
+}

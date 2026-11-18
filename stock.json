@@ -1,0 +1,64 @@
+{
+  "_comment": "What is physically on hand. This file is the only thing you edit to change the shelf; run `node build.mjs` and commit the regenerated index.html. Prices in PHP. This file is public with the repo; landed costs and selling notes live in owner.json, which is gitignored and never pushed.",
+
+  "contact": {
+    "page": "https://www.facebook.com/inoderecords",
+    "shipping": "Shipping via Lalamove or LBC, shouldered by the buyer.",
+    "meetup": "Meet-up possible around Quezon City.",
+    "updated": "2026-10-27"
+  },
+
+  "records": [
+    {
+      "id": "charli-lp",
+      "artist": "Charli XCX",
+      "album": "Music, Fashion, Film",
+      "variant": "Amazon Exclusive Bone White Vinyl",
+      "format": "LP",
+      "qty": 1,
+      "price": 2500,
+      "hook": "US Amazon exclusive, a different pressing from the indie Yorkshire smoke one going around."
+    },
+    {
+      "id": "charli-cd",
+      "artist": "Charli XCX",
+      "album": "Music, Fashion, Film",
+      "variant": "CD",
+      "format": "CD",
+      "qty": 2,
+      "price": 875,
+      "hook": ""
+    },
+    {
+      "id": "phoebe",
+      "artist": "Phoebe Bridgers",
+      "album": "Lost Weekend",
+      "variant": "Rogue Planet Green Glow-in-the-Dark Splatter",
+      "format": "2LP",
+      "qty": 1,
+      "price": 3400,
+      "hook": "The Rogue Planet pressing specifically: green glow-in-the-dark splatter, embossed glow sleeve, gatefold, 20-page lyric booklet. Not the standard black, not the Zodiacal Light.",
+      "_photo": "art/phoebe-source.webp"
+    },
+    {
+      "id": "chatpile",
+      "artist": "Chat Pile",
+      "album": "Who Loves the Sun",
+      "variant": "The Flenser",
+      "format": "LP",
+      "qty": 1,
+      "price": 2700,
+      "hook": "New one on The Flenser. Not stocked locally as far as I can see."
+    },
+    {
+      "id": "underscores",
+      "artist": "Underscores",
+      "album": "U",
+      "variant": "Clear Vinyl",
+      "format": "LP",
+      "qty": 1,
+      "price": 2800,
+      "hook": "Clear vinyl pressing on Mom+Pop. Out of stock at the usual shops right now."
+    }
+  ]
+}
