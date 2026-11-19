@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex">
 <title>INODERECORDS · order placed</title>
 <link rel="icon" href="brand/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="style.css?v=2954d23f">
+<link rel="stylesheet" href="style.css?v=b4c54f06">
 </head>
 <body>
 
@@ -25,8 +25,8 @@
   <p class="done__what" data-what hidden></p>
   <ol class="done__steps">
     <li>Check your inbox, spam folder included. Your order confirmation is there.</li>
-    <li>We reply from the shop address with GCash payment details.</li>
-    <li>Reply to the confirmation email with your payment screenshot and your shipping address, or ask for a Quezon City meetup.</li>
+    <li>We email you the GCash payment details from the shop address.</li>
+    <li>Email your payment screenshot and your shipping address (Lalamove or LBC, shouldered by the buyer), or ask for a Quezon City meetup: <a class="done__mail" data-mail href="./">the shop address</a><noscript> &#183; &#111;&#114;&#100;&#101;&#114;&#115;&#64;&#105;&#110;&#111;&#100;&#101;&#114;&#101;&#99;&#111;&#114;&#100;&#115;&#46;&#99;&#111;&#109;</noscript></li>
   </ol>
   <p class="done__claim">An order is a claim · the first confirmed payment gets the record</p>
   <a class="done__back" href="./">&#8592; Back to the records</a>
@@ -46,6 +46,18 @@
       w.hidden = false;
     }
   } catch (e) { /* storage blocked: the generic copy stands */ }
+})();
+(function () {
+  'use strict';
+  var P = ["orders","inoderecords.com"];
+  var addr = P[0] + '\u0040' + P[1];
+  var m = document.querySelector('[data-mail]');
+  if (m) { m.textContent = addr; m.setAttribute('href', 'mailto:' + addr); }
+  var G = {"number":"","name":""};
+  var p = document.querySelector('[data-pay]');
+  if (p && G.number) {
+    p.textContent = ', or send to ' + G.number + (G.name ? ' (' + G.name + ')' : '');
+  }
 })();
 </script>
 </body>

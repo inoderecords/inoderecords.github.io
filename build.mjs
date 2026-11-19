@@ -71,10 +71,21 @@ const two = (n) => String(n).padStart(2, '0');
  *
  * `site` is where FormSubmit's _next sends the buyer after the captcha. It
  * must be absolute; swap it for the domain when the DNS lands.
+ *
+ * `inbox` is where buyers send payment screenshots. It is split in two so
+ * the address never sits in this repo or in any page as one
+ * regex-matchable string; ordered.html assembles it with script, and the
+ * no-script fallback is entity-encoded. Harvesters read whole strings.
+ *
+ * `gcash` is the account shown as text beside the QR on ordered.html,
+ * injected by script for the same reason: the number is a phone number.
+ * Buyers without script still have the QR, which carries everything.
  */
 const ORDER = {
   endpoint: '',
   site: 'https://antuk3n.github.io/inoderecords-shop',
+  inbox: ['orders', 'inoderecords.com'],
+  gcash: { number: '', name: '' },
 };
 
 /* the disc glyph IS the O in the wordmark: the mark and the name are one
@@ -225,12 +236,13 @@ function buyBlock(r, contact) {
     `${r.artist} · ${r.album}` +
     (r.variant && r.variant !== r.format ? ` · ${r.variant}` : '') +
     ` · ${r.format}`;
+  /* This text ships inside the public page as a hidden field, so it names
+     no address and no number: those live behind ordered.html's script. */
   const reply =
     `We received your order: ${title}, ${peso(r.price)}. ` +
     'An order is a claim and the first confirmed payment gets the record. ' +
-    `Payment details are at ${ORDER.site}/ordered.html. After paying, reply to this ` +
-    'email with the screenshot and your shipping address (Lalamove or LBC, shouldered ' +
-    'by the buyer), or ask for a Quezon City meetup. INODERECORDS · Quezon City';
+    'The payment steps, the GCash details, and where to send your screenshot ' +
+    `are at ${ORDER.site}/ordered.html. INODERECORDS · Quezon City`;
   return `<div class="rec__buy">
               ${amt}
               <details class="order">
@@ -440,6 +452,11 @@ ${ORDER.endpoint ? `<script src="${v.order}" defer></script>\n` : ''}</body>
  * before the endpoint does. Nothing links to it until then.
  */
 function thanksPage(contact, v, hasQr) {
+  /* Every character as a numeric entity: renders as the plain address, but
+     an email regex over the raw HTML finds nothing. The script-built mailto
+     covers everyone else. */
+  const ent = (s) => s.replace(/./g, (c) => `&#${c.charCodeAt(0)};`);
+  const entmail = ent(`${ORDER.inbox[0]}@${ORDER.inbox[1]}`);
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -469,10 +486,10 @@ function thanksPage(contact, v, hasQr) {
     <li>Check your inbox, spam folder included. Your order confirmation is there.</li>
     <li>${
       hasQr
-        ? 'Pay the exact amount by scanning the GCash QR below.'
-        : 'We reply from the shop address with GCash payment details.'
+        ? 'Pay the exact amount by scanning the GCash QR below<span data-pay></span>.'
+        : 'We email you the GCash payment details from the shop address.'
     }</li>
-    <li>Reply to the confirmation email with your payment screenshot and your shipping address, or ask for a Quezon City meetup.</li>
+    <li>Email your payment screenshot and your shipping address (Lalamove or LBC, shouldered by the buyer), or ask for a Quezon City meetup: <a class="done__mail" data-mail href="./">the shop address</a><noscript> &#183; ${entmail}</noscript></li>
   </ol>
 ${
   hasQr
@@ -496,6 +513,18 @@ ${
       w.hidden = false;
     }
   } catch (e) { /* storage blocked: the generic copy stands */ }
+})();
+(function () {
+  'use strict';
+  var P = ${JSON.stringify(ORDER.inbox)};
+  var addr = P[0] + '\\u0040' + P[1];
+  var m = document.querySelector('[data-mail]');
+  if (m) { m.textContent = addr; m.setAttribute('href', 'mailto:' + addr); }
+  var G = ${JSON.stringify(ORDER.gcash)};
+  var p = document.querySelector('[data-pay]');
+  if (p && G.number) {
+    p.textContent = ', or send to ' + G.number + (G.name ? ' (' + G.name + ')' : '');
+  }
 })();
 </script>
 </body>

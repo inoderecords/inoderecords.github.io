@@ -888,3 +888,7 @@ a { color: inherit; }
 /* in the carousel the whole strip hangs on the form's 360px column */
 .has-crate .order[open] summary { max-width: 360px; margin: 0 auto; }
 .has-crate .order__claim { text-align: center; }
+
+/* the screenshot address on ordered.html, filled in by script */
+.done__mail { color: var(--paper); text-underline-offset: .18em; }
+.done__mail:hover, .done__mail:focus-visible { background: var(--paper); color: var(--ink); text-decoration: none; }

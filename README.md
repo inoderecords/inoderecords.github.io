@@ -100,6 +100,14 @@ off this repo) and `site` is the absolute origin for the post-captcha
 redirect. While `endpoint` is `''` the whole strip falls back to the
 Messenger link and none of this renders.
 
+The buyer sends the payment screenshot to the shop inbox directly, so
+`ORDER.inbox` holds that address split in two and `ORDER.gcash` holds the
+account shown beside the QR. Neither ever appears in a page or in this
+repo as one plain string: `ordered.html` assembles both with script, the
+no-script fallback is numeric-entity encoded, and the autoresponse text
+(which ships inside the public index as a hidden field) names only the
+`ordered.html` URL. An email regex over any shipped file finds nothing.
+
 ### Adding artwork for a new record
 
 ```sh
