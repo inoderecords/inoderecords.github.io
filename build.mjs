@@ -93,7 +93,10 @@ const ORDER = {
   site: 'https://inoderecords.com',
   inbox: ['orders', 'inoderecords.com'],
   gcash: { number: '', name: '' },
-  claim: { url: '', key: '' },
+  claim: {
+    url: 'https://dgfixbtziedvqzucxats.supabase.co',
+    key: 'sb_publishable_8c9aLOABXdfqwjv6c9bLAg_44bw0qZ2',
+  },
 };
 
 /* the disc glyph IS the O in the wordmark: the mark and the name are one
