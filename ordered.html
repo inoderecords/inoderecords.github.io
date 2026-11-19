@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0a">
+<meta name="robots" content="noindex">
+<title>INODERECORDS · order placed</title>
+<link rel="icon" href="brand/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css?v=2954d23f">
+</head>
+<body>
+
+<div class="scan" aria-hidden="true"></div>
+<div class="frame" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+
+<header class="bar">
+  <h1 class="bar__name" aria-label="INODERECORDS"><span aria-hidden="true">IN<svg class="bar__o" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4.1" fill="none" stroke-width="1.2"/><circle class="bar__o-dot" cx="5" cy="5" r="1.6"/></svg>DERECORDS</span></h1>
+  <a class="bar__cta" href="https://www.facebook.com/inoderecords">Message us</a>
+</header>
+
+<main class="done">
+  <p class="done__hud">Order placed</p>
+  <p class="done__ino" data-ino hidden><span></span></p>
+  <p class="done__what" data-what hidden></p>
+  <ol class="done__steps">
+    <li>Check your inbox, spam folder included. Your order confirmation is there.</li>
+    <li>We reply from the shop address with GCash payment details.</li>
+    <li>Reply to the confirmation email with your payment screenshot and your shipping address, or ask for a Quezon City meetup.</li>
+  </ol>
+  <p class="done__claim">An order is a claim · the first confirmed payment gets the record</p>
+  <a class="done__back" href="./">&#8592; Back to the records</a>
+</main>
+
+<script>
+(function () {
+  'use strict';
+  try {
+    var o = JSON.parse(sessionStorage.getItem('inode.order') || 'null');
+    if (!o || !o.ino) return;
+    var n = document.querySelector('[data-ino]');
+    if (n) { n.firstElementChild.textContent = o.ino; n.hidden = false; }
+    var w = document.querySelector('[data-what]');
+    if (w && o.record) {
+      w.textContent = o.record + (o.price ? ' · ' + o.price : '');
+      w.hidden = false;
+    }
+  } catch (e) { /* storage blocked: the generic copy stands */ }
+})();
+</script>
+</body>
+</html>

@@ -83,6 +83,23 @@ if one ever reaches the output.
 The first record in `stock.json` is the one the page opens on. `/#chatpile`
 opens on that record instead.
 
+### Orders
+
+The buy button is a `<details>` strip: the buyer leaves an email and the
+form POSTs to FormSubmit, whose free tier relays the order to the shop
+inbox and sends the buyer a static confirmation. `ordered.html` is where
+the buyer lands afterwards; it carries the GCash QR once `pay/gcash.png`
+exists, and `order.js` stamps an inode-styled order number (`ino 0x5B81A`,
+the seconds since 2026 in hex) into the subject and into sessionStorage
+for that page to show. Payment itself stays person to person: an order is
+a claim, and the first confirmed payment gets the record.
+
+`ORDER` at the top of `build.mjs` holds the wiring. `endpoint` is the
+FormSubmit alias (never the raw address, so the inbox cannot be scraped
+off this repo) and `site` is the absolute origin for the post-captcha
+redirect. While `endpoint` is `''` the whole strip falls back to the
+Messenger link and none of this renders.
+
 ### Adding artwork for a new record
 
 ```sh

@@ -732,3 +732,159 @@ a { color: inherit; }
   *, *::before, *::after { transition: none !important; animation: none !important; }
   .scan { display: none; }
 }
+
+/* ── the order strip ────────────────────────────────────────────────── */
+/*
+  <details> under the price: the buy button is the <summary>, so taking an
+  order needs no script at all. Opening is a hard cut like every other cut
+  on the page. While it is open the summary drops to the quiet outline
+  state, because the loaded action moved down to PLACE ORDER.
+*/
+.order summary {
+  list-style: none;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.order summary::-webkit-details-marker { display: none; }
+.order[open] { flex: 1 1 100%; }
+.order[open] summary {
+  display: block;
+  text-align: center;
+  background: none;
+  color: var(--paper);
+}
+
+.order__form {
+  display: flex;
+  flex-direction: column;
+  gap: .6em;
+  padding-top: .85em;
+  text-align: left;
+}
+.has-crate .order__form { max-width: 360px; margin: 0 auto; }
+
+.order__label {
+  font-size: var(--t-hud);
+  font-weight: 500;
+  letter-spacing: var(--ls-hud);
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+/* an input is a control, like a button: it may carry its own hairline */
+.order__email {
+  width: 100%;
+  padding: .7em .75em;
+  font-family: var(--mono);
+  font-size: var(--t-body);
+  color: var(--paper);
+  background: none;
+  border: 1px solid rgba(244, 243, 239, .34);
+  border-radius: 0;
+}
+.order__email::placeholder { color: rgba(244, 243, 239, .28); }
+.order__email:focus { border-color: var(--paper); }
+
+.order__send { width: 100%; }
+
+.order__claim {
+  margin: .15em 0 0;
+  font-size: var(--t-hud);
+  font-weight: 500;
+  letter-spacing: var(--ls-hud);
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.order__hp { display: none; }
+
+/* ── ordered.html: the screen after the captcha ─────────────────────── */
+
+.done {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: clamp(30px, 7vh, 80px) 20px 64px;
+}
+.done__hud {
+  margin: 0;
+  font-size: var(--t-hud);
+  font-weight: 500;
+  letter-spacing: var(--ls-hud);
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.done__ino {
+  margin: .25em 0 0;
+  font-size: clamp(1.7rem, 5vw, 2.5rem);
+  font-weight: 800;
+  letter-spacing: .03em;
+  font-variant-numeric: tabular-nums;
+}
+.done__what {
+  margin: .5em 0 0;
+  font-size: var(--t-note);
+  font-weight: 500;
+  letter-spacing: var(--ls-hud);
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.done__steps {
+  margin: 2.4em 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 1.1em;
+  counter-reset: done;
+}
+.done__steps li {
+  position: relative;
+  padding-left: 2.4em;
+  font-size: var(--t-body);
+  line-height: 1.65;
+  color: rgba(244, 243, 239, .82);
+  counter-increment: done;
+}
+.done__steps li::before {
+  content: counter(done, decimal-leading-zero);
+  position: absolute;
+  left: 0;
+  top: .2em;
+  font-size: var(--t-hud);
+  font-weight: 700;
+  letter-spacing: var(--ls-hud);
+  color: var(--faint);
+}
+/* GCash QRs are meant to live on white; the paper block is the quiet zone */
+.done__qr {
+  display: block;
+  margin: 2.2em 0 0;
+  width: min(240px, 70vw);
+  height: auto;
+  background: #fff;
+  padding: 12px;
+}
+.done__claim {
+  margin: 2.4em 0 0;
+  font-size: var(--t-hud);
+  font-weight: 500;
+  letter-spacing: var(--ls-hud);
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.done__back {
+  display: inline-block;
+  margin-top: 2.6em;
+  font-size: var(--t-note);
+  font-weight: 700;
+  letter-spacing: var(--ls-hud);
+  text-transform: uppercase;
+  color: var(--paper);
+  text-decoration: none;
+}
+.done__back:hover, .done__back:focus-visible { background: var(--paper); color: var(--ink); }
+
+/* in the carousel the whole strip hangs on the form's 360px column */
+.has-crate .order[open] summary { max-width: 360px; margin: 0 auto; }
+.has-crate .order__claim { text-align: center; }

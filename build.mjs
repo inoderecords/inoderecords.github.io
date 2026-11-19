@@ -46,6 +46,7 @@
  * (landed cost, when to cut the price). They never reach the page: enforced
  * by `publicFields` and re-checked against the output below, not remembered.
  */
+import { existsSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { dirname, join } from 'node:path';
@@ -60,6 +61,31 @@ const esc = (s) =>
 
 const peso = (n) => '₱' + n.toLocaleString('en-US');
 const two = (n) => String(n).padStart(2, '0');
+
+/**
+ * The GCash email flow. `endpoint` is the FormSubmit alias that receives
+ * orders (the random string from formsubmit.co, never the raw address, so
+ * the inbox cannot be scraped off this public repo). While it is '' every
+ * record falls back to the Messenger link, which is how the page shipped
+ * before orders existed, and nothing else on the page changes.
+ *
+ * `site` is where FormSubmit's _next sends the buyer after the captcha. It
+ * must be absolute; swap it for the domain when the DNS lands.
+ */
+const ORDER = {
+  endpoint: '',
+  site: 'https://antuk3n.github.io/inoderecords-shop',
+};
+
+/* the disc glyph IS the O in the wordmark: the mark and the name are one
+   word, per the brand sheet. Inline SVG because the Latin subset of the
+   webfont has no ◉ and a fallback glyph from another family would put a
+   second typeface on the page. */
+const wordmark =
+  `<span aria-hidden="true">IN<svg class="bar__o" viewBox="0 0 10 10">` +
+  `<circle cx="5" cy="5" r="4.1" fill="none" stroke-width="1.2"/>` +
+  `<circle class="bar__o-dot" cx="5" cy="5" r="1.6"/>` +
+  `</svg>DERECORDS</span>`;
 
 const publicFields = ['id', 'artist', 'album', 'variant', 'format', 'qty', 'price', 'hook'];
 
@@ -171,6 +197,65 @@ async function stamped(file) {
   }
 }
 
+/* ── the order strip ────────────────────────────────────────────────── */
+
+/**
+ * Checkout, Vestigial style: the buyer leaves an email, gets an order
+ * number, pays the GCash QR, and the shop confirms by reply. The gateway
+ * comes later; this is the version of checkout a static page can do
+ * honestly.
+ *
+ * <summary> is the buy button, so taking an order needs no script, and the
+ * form is a plain POST to FormSubmit, whose free tier sends both mails:
+ * the order to the shop inbox, the static confirmation back to the buyer.
+ * order.js stamps the inode-styled order number in before the POST leaves.
+ */
+function buyBlock(r, contact) {
+  const amt =
+    `<span class="rec__amt">${peso(r.price)}</span>` +
+    (r.qty > 1 ? '<span class="rec__each">each</span>' : '');
+  if (!ORDER.endpoint) {
+    return `<p class="rec__buy">
+              ${amt}
+              <a class="btn btn--buy" href="${esc(contact.page)}"
+                 aria-label="Message to buy ${esc(r.artist)}, ${esc(r.album)}">MESSAGE TO BUY</a>
+            </p>`;
+  }
+  const title =
+    `${r.artist} · ${r.album}` +
+    (r.variant && r.variant !== r.format ? ` · ${r.variant}` : '') +
+    ` · ${r.format}`;
+  const reply =
+    `We received your order: ${title}, ${peso(r.price)}. ` +
+    'An order is a claim and the first confirmed payment gets the record. ' +
+    `Payment details are at ${ORDER.site}/ordered.html. After paying, reply to this ` +
+    'email with the screenshot and your shipping address (Lalamove or LBC, shouldered ' +
+    'by the buyer), or ask for a Quezon City meetup. INODERECORDS · Quezon City';
+  return `<div class="rec__buy">
+              ${amt}
+              <details class="order">
+                <summary class="btn btn--buy"
+                         aria-label="Buy ${esc(r.artist)}, ${esc(r.album)}">BUY</summary>
+                <form class="order__form" method="POST"
+                      action="https://formsubmit.co/${esc(ORDER.endpoint)}">
+                  <input type="hidden" name="_subject" value="Order · ${esc(title)} · ${peso(r.price)}">
+                  <input type="hidden" name="_template" value="table">
+                  <input type="hidden" name="_next" value="${esc(ORDER.site)}/ordered.html">
+                  <input type="hidden" name="_autoresponse" value="${esc(reply)}">
+                  <input type="text" name="_honey" class="order__hp" tabindex="-1" autocomplete="off">
+                  <input type="hidden" name="record" value="${esc(title)}">
+                  <input type="hidden" name="price" value="${peso(r.price)}">
+                  <input type="hidden" name="order" value="">
+                  <label class="order__label" for="em-${esc(r.id)}">Your email</label>
+                  <input class="order__email" id="em-${esc(r.id)}" type="email" name="email"
+                         required autocomplete="email" placeholder="you@gmail.com">
+                  <button class="btn btn--buy order__send" type="submit">PLACE ORDER</button>
+                  <p class="order__claim">An order is a claim · first confirmed payment gets it</p>
+                </form>
+              </details>
+            </div>`;
+}
+
 /* ── one record ─────────────────────────────────────────────────────── */
 
 function card(r, contact, i, all, art, disc) {
@@ -209,12 +294,7 @@ ${
             <p class="rec__album">${esc(r.album)}</p>
             ${r.variant && r.variant !== r.format ? `<p class="rec__variant">${esc(r.variant)}</p>` : ''}
             ${r.hook ? `<p class="rec__hook">${esc(r.hook)}</p>` : ''}
-            <p class="rec__buy">
-              <span class="rec__amt">${peso(r.price)}</span>
-              ${r.qty > 1 ? '<span class="rec__each">each</span>' : ''}
-              <a class="btn btn--buy" href="${esc(contact.page)}"
-                 aria-label="Message to buy ${esc(r.artist)}, ${esc(r.album)}">MESSAGE TO BUY</a>
-            </p>
+            ${buyBlock(r, contact)}
           </li>`;
 }
 
@@ -227,6 +307,12 @@ function page(stock, art, disc, v) {
   const n = records.reduce((a, r) => a + r.qty, 0);
   const artists = records.map((r) => r.artist).filter((v, i, a) => a.indexOf(v) === i);
   const desc = `${n} brand new sealed records, in the Philippines now, shipping from Quezon City. ${artists.join(', ')}.`;
+
+  /* The footer steps tell the truth about the current ordering mode: the
+     email flow when the endpoint is wired, Messenger when it is not. */
+  const how = ORDER.endpoint
+    ? ['Order with your email', 'Pay via GCash', 'Reply with the screenshot, we ship']
+    : ['Message us on Facebook', 'We send real photos of the actual copy', 'Pay and we ship'];
 
   /*
     The crate, seen edge on, with names. On a narrow screen each entry is a
@@ -248,16 +334,6 @@ function page(stock, art, disc, v) {
         `</button></li>`,
     )
     .join('\n');
-
-  /* the disc glyph IS the O in the wordmark: the mark and the name are one
-     word, per the brand sheet. Inline SVG because the Latin subset of the
-     webfont has no ◉ and a fallback glyph from another family would put a
-     second typeface on the page. */
-  const wordmark =
-    `<span aria-hidden="true">IN<svg class="bar__o" viewBox="0 0 10 10">` +
-    `<circle cx="5" cy="5" r="4.1" fill="none" stroke-width="1.2"/>` +
-    `<circle class="bar__o-dot" cx="5" cy="5" r="1.6"/>` +
-    `</svg>DERECORDS</span>`;
 
   return `<!doctype html>
 <html lang="en">
@@ -331,9 +407,7 @@ ${dots}
      both in the same small voice as every other readout on the page. -->
 <footer class="foot">
   <p class="foot__how">
-    <span>Message us on Facebook</span>
-    <span>We send real photos of the actual copy</span>
-    <span>Pay and we ship</span>
+${how.map((s) => `    <span>${esc(s)}</span>`).join('\n')}
   </p>
   <p class="foot__line">
     <span data-facts>${records.length} titles · ${n} copies · all sealed</span>
@@ -348,6 +422,82 @@ ${dots}
 
 <script src="${v.boot}" defer></script>
 <script src="${v.crate}" defer></script>
+${ORDER.endpoint ? `<script src="${v.order}" defer></script>\n` : ''}</body>
+</html>
+`;
+}
+
+/* ── ordered.html: where FormSubmit's _next lands the buyer ─────────── */
+
+/**
+ * The screen after the captcha. The order number cannot ride the redirect
+ * (FormSubmit owns it), so order.js leaves it in sessionStorage on the way
+ * out and the inline script below picks it up: same tab, so it survives
+ * the round trip. Without JavaScript the page still says everything that
+ * matters; it just cannot name the number, and the shop's reply does that.
+ *
+ * Built even while ordering is off, so the copy exists to read and style
+ * before the endpoint does. Nothing links to it until then.
+ */
+function thanksPage(contact, v, hasQr) {
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0a">
+<meta name="robots" content="noindex">
+<title>INODERECORDS · order placed</title>
+<link rel="icon" href="brand/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="${v.css}">
+</head>
+<body>
+
+<div class="scan" aria-hidden="true"></div>
+<div class="frame" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+
+<header class="bar">
+  <h1 class="bar__name" aria-label="INODERECORDS">${wordmark}</h1>
+  <a class="bar__cta" href="${esc(contact.page)}">Message us</a>
+</header>
+
+<main class="done">
+  <p class="done__hud">Order placed</p>
+  <p class="done__ino" data-ino hidden><span></span></p>
+  <p class="done__what" data-what hidden></p>
+  <ol class="done__steps">
+    <li>Check your inbox, spam folder included. Your order confirmation is there.</li>
+    <li>${
+      hasQr
+        ? 'Pay the exact amount by scanning the GCash QR below.'
+        : 'We reply from the shop address with GCash payment details.'
+    }</li>
+    <li>Reply to the confirmation email with your payment screenshot and your shipping address, or ask for a Quezon City meetup.</li>
+  </ol>
+${
+  hasQr
+    ? `  <img class="done__qr" src="pay/gcash.png" alt="GCash QR code for INODERECORDS" width="240" height="240">\n`
+    : ''
+}  <p class="done__claim">An order is a claim · the first confirmed payment gets the record</p>
+  <a class="done__back" href="./">&#8592; Back to the records</a>
+</main>
+
+<script>
+(function () {
+  'use strict';
+  try {
+    var o = JSON.parse(sessionStorage.getItem('inode.order') || 'null');
+    if (!o || !o.ino) return;
+    var n = document.querySelector('[data-ino]');
+    if (n) { n.firstElementChild.textContent = o.ino; n.hidden = false; }
+    var w = document.querySelector('[data-what]');
+    if (w && o.record) {
+      w.textContent = o.record + (o.price ? ' · ' + o.price : '');
+      w.hidden = false;
+    }
+  } catch (e) { /* storage blocked: the generic copy stands */ }
+})();
+</script>
 </body>
 </html>
 `;
@@ -358,12 +508,17 @@ ${dots}
 const stock = JSON.parse(await readFile(join(HERE, 'stock.json'), 'utf8'));
 const art = await artwork();
 const disc = await discs();
-const html = page(stock, art, disc, {
+const v = {
   css: await stamped('style.css'),
   boot: await stamped('boot.js'),
   crate: await stamped('crate.js'),
-});
+  order: await stamped('order.js'),
+};
+const html = page(stock, art, disc, v);
 await writeFile(join(HERE, 'index.html'), html);
+
+const hasQr = existsSync(join(HERE, 'pay', 'gcash.png'));
+await writeFile(join(HERE, 'ordered.html'), thanksPage(stock.contact, v, hasQr));
 
 for (const r of stock.records) {
   for (const [k, v] of Object.entries(r)) {
@@ -376,6 +531,11 @@ for (const r of stock.records) {
 console.log(
   `index.html  ${(Buffer.byteLength(html) / 1024).toFixed(1)} KB  ` +
     `${stock.records.length} records, ${stock.records.reduce((a, r) => a + r.qty, 0)} copies`,
+);
+console.log(
+  ORDER.endpoint
+    ? `orders      on: FormSubmit, ${hasQr ? 'GCash QR on ordered.html' : 'NO pay/gcash.png yet'}`
+    : 'orders      off: buy is the Messenger link until ORDER.endpoint is set',
 );
 let coverOnly = 0;
 for (const r of stock.records) {
