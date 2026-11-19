@@ -83,7 +83,7 @@ const two = (n) => String(n).padStart(2, '0');
  */
 const ORDER = {
   endpoint: '',
-  site: 'https://inoderecords.github.io',
+  site: 'https://inoderecords.com',
   inbox: ['orders', 'inoderecords.com'],
   gcash: { number: '', name: '' },
 };
