@@ -109,6 +109,18 @@ localStorage keeps only ids, so a stale cart can never carry a stale
 price. With script off the per-record forms stay, one record per email,
 and the page remains fully shoppable.
 
+The shared shelf (`supabase.sql`, wired through `ORDER.claim`) is what
+makes a double-sell impossible: before the order email leaves, the cart
+makes one atomic `shop_claim` call that takes the copies off the shelf
+for everyone, and a record with nothing free arrives on the page already
+marked CLAIMED. Pending claims expire after 48 hours unless confirmed in
+the Supabase dashboard, which is the admin surface: payment verified,
+flip the row to `confirmed`; no payment, it releases itself. `shelf.mjs`
+prints the upserts that keep `shop_shelf` matching stock.json. With
+`claim.url` empty, or Supabase unreachable, the cart sells on the claim
+rule alone, exactly as before: the shelf can refuse a sale, but its
+absence never loses one.
+
 The buyer sends the payment screenshot to the shop inbox directly, so
 `ORDER.inbox` holds that address split in two and `ORDER.gcash` holds the
 account shown beside the QR. Neither ever appears in a page or in this

@@ -80,12 +80,20 @@ const two = (n) => String(n).padStart(2, '0');
  * `gcash` is the account shown as text beside the QR on ordered.html,
  * injected by script for the same reason: the number is a phone number.
  * Buyers without script still have the QR, which carries everything.
+ *
+ * `claim` is the Supabase project behind supabase.sql: the shared shelf
+ * that makes a double-sell impossible. The key is the anon key, public by
+ * design. While `url` is '' the cart sells on the honor of the claim rule
+ * alone, which is how the page worked before the shelf existed; with it
+ * set, an order atomically takes the copy off the shelf for everyone, and
+ * a claimed record shows CLAIMED before anyone can order it again.
  */
 const ORDER = {
   endpoint: '8370b688e15b57aa52ccbeb88141ae9f',
   site: 'https://inoderecords.com',
   inbox: ['orders', 'inoderecords.com'],
   gcash: { number: '', name: '' },
+  claim: { url: '', key: '' },
 };
 
 /* the disc glyph IS the O in the wordmark: the mark and the name are one
@@ -368,7 +376,11 @@ function page(stock, art, disc, v) {
 <link rel="icon" href="brand/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="${v.css}">
 </head>
-<body>
+<body${
+    ORDER.claim.url
+      ? ` data-claim-url="${esc(ORDER.claim.url)}" data-claim-key="${esc(ORDER.claim.key)}"`
+      : ''
+  }>
 
 <div class="scan" aria-hidden="true"></div>
 <div class="frame" aria-hidden="true"><i></i><i></i><i></i><i></i></div>

@@ -7,11 +7,19 @@
   the bottom keeps the running total, and one PLACE ORDER sends a single
   email carrying every record, the total, and one order number.
 
-  Everything the cart knows comes off the DOM: the FormSubmit action and the
-  redirect from the first hidden form, the titles and prices from the <li>
-  data attributes. localStorage only remembers ids, so a stale cart can
-  never carry yesterday's price; it re-reads the shelf on every load, and a
-  record that left the page leaves the cart.
+  When the body carries data-claim-url, the shelf is shared: before the
+  email leaves, one atomic call to Supabase takes the copies off the shelf
+  for everyone, so of two buyers racing for the last copy exactly one gets
+  it and the other is told, by name, which record fell through. A record
+  with no copies free arrives on the page already marked CLAIMED. If the
+  shelf cannot be reached the order still goes through: the claim rule in
+  the copy is the fallback, never a lost sale.
+
+  Everything else the cart knows comes off the DOM: the FormSubmit action
+  and the redirect from the first hidden form, the titles and prices from
+  the <li> data attributes. localStorage only remembers ids, so a stale
+  cart can never carry yesterday's price; it re-reads the shelf on every
+  load, and a record that left the page leaves the cart.
 */
 (function () {
   'use strict';
@@ -23,6 +31,10 @@
   var NEXT = (seed.querySelector('[name="_next"]') || { value: '' }).value;
   var EPOCH = Date.UTC(2026, 0, 1);
   var KEY = 'inode.cart';
+  var CLAIM = {
+    url: document.body.getAttribute('data-claim-url') || '',
+    key: document.body.getAttribute('data-claim-key') || '',
+  };
 
   /* ── the shelf, as data ─────────────────────────────────────────────── */
 
@@ -35,6 +47,7 @@
       id: li.id,
       title: li.getAttribute('data-title'),
       price: parseInt(li.getAttribute('data-price'), 10) || 0,
+      shelf: parseInt(li.getAttribute('data-qty'), 10) || 1,
       qty: parseInt(li.getAttribute('data-qty'), 10) || 1,
       btn: null,
     };
@@ -88,6 +101,7 @@
     '<form class="cart__panel" method="POST" hidden>' +
     '<input type="text" name="_honey" class="order__hp" tabindex="-1" autocomplete="off">' +
     '<ul class="cart__items"></ul>' +
+    '<p class="cart__note" data-note hidden role="status"></p>' +
     '<label class="order__label" for="cart-em">Your email</label>' +
     '<input class="order__email" id="cart-em" type="email" name="email" required ' +
     'autocomplete="email" placeholder="you@gmail.com">' +
@@ -102,6 +116,7 @@
   var nEl = bar.querySelector('[data-cart-n]');
   var tEl = bar.querySelector('[data-cart-total]');
   var hint = bar.querySelector('.cart__hint');
+  var note = bar.querySelector('[data-note]');
 
   sum.addEventListener('click', function () {
     var open = panel.hidden;
@@ -144,10 +159,16 @@
       var r = recs[order[i]];
       if (!r.btn) continue;
       var k = count(r.id);
-      var full = k >= r.qty;
-      r.btn.textContent = k === 0 ? 'ADD TO CART' : full ? 'IN CART' : 'IN CART · ADD ANOTHER';
-      r.btn.disabled = full;
-      r.btn.classList.toggle('cart__add--in', k > 0);
+      var gone = r.qty <= 0;
+      var full = !gone && k >= r.qty;
+      r.btn.textContent = gone
+        ? 'CLAIMED'
+        : k === 0 ? 'ADD TO CART' : full ? 'IN CART' : 'IN CART · ADD ANOTHER';
+      r.btn.disabled = gone || full;
+      r.btn.classList.toggle('cart__add--in', !gone && k > 0);
+      r.btn.classList.toggle('cart__add--gone', gone);
+      var tag = document.getElementById(r.id).querySelector('.tag--on');
+      if (tag && gone) tag.textContent = 'CLAIMED';
     }
 
     if (!cart.length) {
@@ -190,12 +211,38 @@
     render();
   });
 
+  /* ── the shared shelf ───────────────────────────────────────────────── */
+
+  function refreshAvail(then) {
+    if (!CLAIM.url) { if (then) then(); return; }
+    fetch(CLAIM.url + '/rest/v1/shop_availability?select=record,free', {
+      headers: { apikey: CLAIM.key, Authorization: 'Bearer ' + CLAIM.key },
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (rows) {
+        if (!rows || !rows.length) { if (then) then(); return; }
+        for (var i = 0; i < rows.length; i++) {
+          var r = recs[rows[i].record];
+          if (!r) continue;
+          var free = parseInt(rows[i].free, 10);
+          if (!isNaN(free)) r.qty = Math.max(0, Math.min(r.shelf, free));
+        }
+        cart = load(); /* re-cap what the cart may hold */
+        save();
+        render();
+        if (then) then();
+      })
+      .catch(function () { if (then) then(); });
+    /* unreachable shelf: the page sells on the claim rule, as it always did */
+  }
+
   /* ── the one email ──────────────────────────────────────────────────── */
 
-  panel.addEventListener('submit', function () {
-    var ino =
-      'ino 0x' +
-      Math.max(1, Math.round((Date.now() - EPOCH) / 1000)).toString(16).toUpperCase();
+  var claimed = false; /* set once the shelf has said yes */
+
+  function buildFields(ino) {
+    var old = panel.querySelectorAll('[data-gen]');
+    for (var i = 0; i < old.length; i++) old[i].parentNode.removeChild(old[i]);
 
     var lines = [];
     for (var i = 0; i < order.length; i++) {
@@ -204,7 +251,6 @@
       if (k) lines.push(r.title + (k > 1 ? ' ×' + k : '') + ' — ' + peso(r.price * k));
     }
     var what = cart.length === 1 ? recs[cart[0]].title : cart.length + ' records';
-    var sub = 'Order · ' + what + ' · ' + peso(total()) + ' · ' + ino;
     var reply =
       'We received your order: ' + lines.join('; ') + '. Total ' + peso(total()) + '. ' +
       'An order is a claim and the first confirmed payment gets the record. ' +
@@ -216,9 +262,10 @@
       inp.type = 'hidden';
       inp.name = n;
       inp.value = v;
+      inp.setAttribute('data-gen', '');
       panel.appendChild(inp);
     };
-    add('_subject', sub);
+    add('_subject', 'Order · ' + what + ' · ' + peso(total()) + ' · ' + ino);
     add('_template', 'table');
     add('_next', NEXT);
     add('_autoresponse', reply);
@@ -226,7 +273,10 @@
     add('records', lines.join('\n'));
     add('total', peso(total()));
     panel.setAttribute('action', ACTION);
+    return lines;
+  }
 
+  function sendOff(ino, lines) {
     try {
       sessionStorage.setItem('inode.order', JSON.stringify({
         ino: ino,
@@ -235,7 +285,70 @@
       }));
       localStorage.removeItem(KEY); /* the claim is placed; the cart is done */
     } catch (e) { /* private window: ordered.html shows the generic copy */ }
+  }
+
+  panel.addEventListener('submit', function (e) {
+    if (!cart.length) { e.preventDefault(); return; }
+
+    var ino =
+      'ino 0x' +
+      Math.max(1, Math.round((Date.now() - EPOCH) / 1000)).toString(16).toUpperCase();
+    var lines = buildFields(ino);
+
+    if (!CLAIM.url || claimed) {
+      sendOff(ino, lines);
+      return; /* the POST leaves naturally */
+    }
+
+    e.preventDefault();
+    note.hidden = true;
+
+    var items = [];
+    for (var i = 0; i < order.length; i++) {
+      var k = count(order[i]);
+      if (k) items.push({ record: order[i], n: k });
+    }
+    var buyer = (panel.querySelector('.order__email') || { value: '' }).value;
+
+    fetch(CLAIM.url + '/rest/v1/rpc/shop_claim', {
+      method: 'POST',
+      headers: {
+        apikey: CLAIM.key,
+        Authorization: 'Bearer ' + CLAIM.key,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ items: items, buyer: buyer, ino: ino }),
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (res && res.ok === false && (res.why === 'claimed' || res.why === 'unknown')) {
+          var r = recs[res.record];
+          var name = r ? r.title : res.record;
+          for (var i = cart.length - 1; i >= 0; i--) {
+            if (cart[i] === res.record) cart.splice(i, 1);
+          }
+          save();
+          note.textContent =
+            'JUST CLAIMED BY SOMEONE ELSE · ' + name + ' · taken out of your cart';
+          note.hidden = false;
+          refreshAvail();
+          render();
+          if (cart.length) panel.hidden = false;
+          return;
+        }
+        /* yes, or an answer we cannot read: the email flow carries it */
+        claimed = true;
+        sendOff(ino, lines);
+        panel.submit();
+      })
+      .catch(function () {
+        /* shelf unreachable: never lose the sale over it */
+        claimed = true;
+        sendOff(ino, lines);
+        panel.submit();
+      });
   });
 
+  refreshAvail();
   render();
 })();

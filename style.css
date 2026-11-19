@@ -958,3 +958,16 @@ a { color: inherit; }
 /* room so the strip never sits on the last thing the page says */
 body.has-cart { padding-bottom: 3.4em; }
 .has-crate body.has-cart { padding-bottom: 2.6em; }
+
+/* the shelf speaking: a record someone else just took, a dead button */
+.cart__note {
+  margin: .2em 0 .4em;
+  font-size: var(--t-hud);
+  font-weight: 700;
+  letter-spacing: var(--ls-hud);
+  text-transform: uppercase;
+  color: var(--paper);
+  border-left: 2px solid var(--paper);
+  padding-left: .8em;
+}
+.cart__add--gone { opacity: .35; cursor: default; }
