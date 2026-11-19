@@ -82,7 +82,7 @@ const two = (n) => String(n).padStart(2, '0');
  * Buyers without script still have the QR, which carries everything.
  */
 const ORDER = {
-  endpoint: '',
+  endpoint: '8370b688e15b57aa52ccbeb88141ae9f',
   site: 'https://inoderecords.com',
   inbox: ['orders', 'inoderecords.com'],
   gcash: { number: '', name: '' },
