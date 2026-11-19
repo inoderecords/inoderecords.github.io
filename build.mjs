@@ -221,6 +221,11 @@ async function stamped(file) {
  * the order to the shop inbox, the static confirmation back to the buyer.
  * order.js stamps the inode-styled order number in before the POST leaves.
  */
+const titleOf = (r) =>
+  `${r.artist} · ${r.album}` +
+  (r.variant && r.variant !== r.format ? ` · ${r.variant}` : '') +
+  ` · ${r.format}`;
+
 function buyBlock(r, contact) {
   const amt =
     `<span class="rec__amt">${peso(r.price)}</span>` +
@@ -232,10 +237,7 @@ function buyBlock(r, contact) {
                  aria-label="Message to buy ${esc(r.artist)}, ${esc(r.album)}">MESSAGE TO BUY</a>
             </p>`;
   }
-  const title =
-    `${r.artist} · ${r.album}` +
-    (r.variant && r.variant !== r.format ? ` · ${r.variant}` : '') +
-    ` · ${r.format}`;
+  const title = titleOf(r);
   /* This text ships inside the public page as a hidden field, so it names
      no address and no number: those live behind ordered.html's script. */
   const reply =
@@ -287,6 +289,7 @@ function card(r, contact, i, all, art, disc) {
         ? ['DISC · PHOTOGRAPHED', 'THIS PRESSING']
         : ['DISC · NOT PICTURED', 'REAL PHOTOS ON REQUEST'];
   return `          <li class="rec" id="${esc(r.id)}" data-variant="${variantOf(r)}"
+              data-title="${esc(titleOf(r))}" data-price="${r.price}" data-qty="${r.qty}"
               data-prov1="${esc(prov[0])}" data-prov2="${esc(prov[1])}"
               ${d ? `data-discs="${d.files.join(',')}" data-open="${d.open}"` : ''}${
     a ? ` data-art="${a}"` : ''
@@ -434,7 +437,7 @@ ${how.map((s) => `    <span>${esc(s)}</span>`).join('\n')}
 
 <script src="${v.boot}" defer></script>
 <script src="${v.crate}" defer></script>
-${ORDER.endpoint ? `<script src="${v.order}" defer></script>\n` : ''}</body>
+${ORDER.endpoint ? `<script src="${v.order}" defer></script>\n<script src="${v.cart}" defer></script>\n` : ''}</body>
 </html>
 `;
 }
@@ -542,6 +545,7 @@ const v = {
   boot: await stamped('boot.js'),
   crate: await stamped('crate.js'),
   order: await stamped('order.js'),
+  cart: await stamped('cart.js'),
 };
 const html = page(stock, art, disc, v);
 await writeFile(join(HERE, 'index.html'), html);

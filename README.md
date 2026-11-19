@@ -100,6 +100,15 @@ off this repo) and `site` is the absolute origin for the post-captcha
 redirect. While `endpoint` is `''` the whole strip falls back to the
 Messenger link and none of this renders.
 
+`cart.js` is the multi-record path: with script on, the per-record form
+folds away, every record gets ADD TO CART, and a strip along the bottom
+checks the whole cart out as one email with one order number and one
+total. It learns everything from the DOM (the FormSubmit action from the
+first hidden form, titles and prices from the `<li>` data attributes) and
+localStorage keeps only ids, so a stale cart can never carry a stale
+price. With script off the per-record forms stay, one record per email,
+and the page remains fully shoppable.
+
 The buyer sends the payment screenshot to the shop inbox directly, so
 `ORDER.inbox` holds that address split in two and `ORDER.gcash` holds the
 account shown beside the QR. Neither ever appears in a page or in this

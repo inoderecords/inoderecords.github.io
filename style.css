@@ -892,3 +892,69 @@ a { color: inherit; }
 /* the screenshot address on ordered.html, filled in by script */
 .done__mail { color: var(--paper); text-underline-offset: .18em; }
 .done__mail:hover, .done__mail:focus-visible { background: var(--paper); color: var(--ink); text-decoration: none; }
+
+/* ── the cart ───────────────────────────────────────────────────────────
+   One strip along the bottom, in the same voice as the footer readouts.
+   It exists only when cart.js put something in it, so none of this touches
+   the no-script page. Calm on purpose: the cart is where the claim gets
+   made, so nothing in it moves, flashes or eases. */
+.cart {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  background: var(--ink);
+  border-top: 1px solid rgba(244, 243, 239, .34);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+.cart__sum {
+  display: block;
+  width: 100%;
+  padding: .95em 16px;
+  background: none;
+  border: 0;
+  color: var(--paper);
+  font: inherit;
+  font-size: var(--t-hud);
+  font-weight: 700;
+  letter-spacing: var(--ls-hud);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.cart__sum:focus-visible { outline: 1px solid var(--paper); outline-offset: -1px; }
+.cart__hint { margin-left: .9em; color: var(--dim); }
+.cart__panel {
+  display: flex;
+  flex-direction: column;
+  gap: .6em;
+  max-width: 360px;
+  margin: 0 auto;
+  padding: 0 16px 1.1em;
+}
+.cart__panel[hidden] { display: none; }
+.cart__items { list-style: none; margin: 0 0 .3em; padding: 0; }
+.cart__item {
+  display: flex;
+  align-items: baseline;
+  gap: .7em;
+  padding: .35em 0;
+  font-size: var(--t-note);
+}
+.cart__what { flex: 1 1 auto; min-width: 0; }
+.cart__item .cart__px { white-space: nowrap; }
+.cart__rm {
+  background: none;
+  border: 0;
+  padding: 0 .2em;
+  color: var(--dim);
+  font: inherit;
+  cursor: pointer;
+}
+.cart__rm:hover, .cart__rm:focus-visible { color: var(--paper); }
+.cart__add--in { opacity: .55; }
+.cart__add:disabled { cursor: default; }
+
+/* room so the strip never sits on the last thing the page says */
+body.has-cart { padding-bottom: 3.4em; }
+.has-crate body.has-cart { padding-bottom: 2.6em; }
