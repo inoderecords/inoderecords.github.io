@@ -1,25 +1,26 @@
 /*
   The order, done properly: one call claims the records on the shared
-  shelf and sends both emails from the shop's own address, through
-  Spacemail's SMTP. The buyer's confirmation really is from
-  orders@inoderecords.com, so replying to it reaches the shop, and the
-  domain's SPF and DKIM vouch for it, which is what keeps it out of spam.
+  shelf and sends both emails from the shop's own address. The buyer's
+  confirmation really is from the shop, so replying to it reaches the
+  shop, and the domain's DKIM vouches for it, which is what keeps it
+  out of spam.
+
+  The mail leaves through Resend's HTTPS API, not SMTP: Supabase drops
+  outbound SMTP packets on the floor (465 and 587 both hang the full
+  TCP timeout), so an email API is the only way out. Replies still land
+  in the shop's own mailbox; Resend only signs what goes out.
 
   The page calls this instead of posting to FormSubmit; FormSubmit stays
   as the no-script fallback only. If the claim fails the caller is told
   which record fell through and nothing is sent. If the claim lands but
-  the mail cannot leave (SMTP down, port blocked), the claim stands and
-  the caller is told mailed: false, so it can fall back to FormSubmit for
-  the emails alone.
+  the mail cannot leave, the claim stands and the caller is told
+  mailed: false, so it can fall back to FormSubmit for the emails alone.
 
   Secrets, set with `supabase secrets set`:
-    SMTP_HOST   smtp.spacemail.com
-    SMTP_PORT   465
-    SMTP_USER   the shop address
-    SMTP_PASS   its mailbox password
+    SMTP_USER   the shop address, kept out of this public file
+    RESEND_KEY  a Resend API key for the verified domain
 */
 import { createClient } from 'npm:@supabase/supabase-js@2.49.4';
-import { SMTPClient } from 'https://deno.land/x/denomailer@1.6.0/mod.ts';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -119,38 +120,31 @@ Ship to: ${address}
 Confirm the claim in the Supabase dashboard once the payment lands.`;
 
   const user = Deno.env.get('SMTP_USER') ?? '';
-  const port = Number(Deno.env.get('SMTP_PORT') ?? '465');
+  const key = Deno.env.get('RESEND_KEY') ?? '';
   let mailed = false;
   try {
-    const smtp = new SMTPClient({
-      connection: {
-        hostname: Deno.env.get('SMTP_HOST') ?? 'smtp.spacemail.com',
-        port,
-        tls: port === 465, /* 465 is implicit TLS; 587 negotiates STARTTLS */
-        auth: { username: user, password: Deno.env.get('SMTP_PASS') ?? '' },
-      },
+    const send = async (msg: Record<string, unknown>) => {
+      const r = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(msg),
+        signal: AbortSignal.timeout(15000),
+      });
+      if (!r.ok) throw new Error(`resend ${r.status}`);
+    };
+    await send({
+      from: `INODERECORDS <${user}>`,
+      to: [buyer],
+      subject: `Order placed · ${ino} · INODERECORDS`,
+      text: buyerText,
     });
-    /* a blocked port hangs the full TCP timeout; never make a buyer wait
-       through that. Past the deadline the claim stands and we say
-       mailed: false, and the page sends the emails the old way. */
-    const deadline = new Promise<never>((_, no) =>
-      setTimeout(() => no(new Error('mail deadline')), 15000));
-    await Promise.race([deadline, (async () => {
-      await smtp.send({
-        from: `INODERECORDS <${user}>`,
-        to: buyer,
-        subject: `Order placed · ${ino} · INODERECORDS`,
-        content: buyerText,
-      });
-      await smtp.send({
-        from: `INODERECORDS <${user}>`,
-        to: user,
-        replyTo: buyer,
-        subject: `Order · ${total} · ${ino}`,
-        content: shopText,
-      });
-      await smtp.close();
-    })()]);
+    await send({
+      from: `INODERECORDS <${user}>`,
+      to: [user],
+      reply_to: buyer,
+      subject: `Order · ${total} · ${ino}`,
+      text: shopText,
+    });
     mailed = true;
   } catch (_e) {
     /* the claim stands; the caller sends the emails the old way */
