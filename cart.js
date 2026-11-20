@@ -105,6 +105,13 @@
     '<label class="order__label" for="cart-em">Your email</label>' +
     '<input class="order__email" id="cart-em" type="email" name="email" required ' +
     'autocomplete="email" placeholder="you@gmail.com">' +
+    '<label class="order__label" for="cart-nm">Your name</label>' +
+    '<input class="order__email" id="cart-nm" type="text" name="name" required ' +
+    'maxlength="120" autocomplete="name" placeholder="Juan Dela Cruz">' +
+    '<label class="order__label" for="cart-ad">Ship to</label>' +
+    '<textarea class="order__email order__area" id="cart-ad" name="address" required ' +
+    'maxlength="500" autocomplete="street-address" rows="3" ' +
+    'placeholder="Street · barangay · city (Lalamove or LBC, shouldered by you) · or say QC meetup"></textarea>' +
     '<button class="btn btn--buy order__send" type="submit">PLACE ORDER</button>' +
     '<p class="order__claim">An order is a claim · first confirmed payment gets it</p>' +
     '</form>';
@@ -308,16 +315,26 @@
       var k = count(order[i]);
       if (k) items.push({ record: order[i], n: k });
     }
-    var buyer = (panel.querySelector('.order__email') || { value: '' }).value;
+    var field = function (sel) {
+      var el = panel.querySelector(sel);
+      return el ? el.value : '';
+    };
 
-    fetch(CLAIM.url + '/rest/v1/rpc/shop_claim', {
+    /* One call: the claim and both emails, sent from the shop's own
+       address so the confirmation is really from orders@ and replying to
+       it reaches the shop. FormSubmit is only the fallback courier. */
+    fetch(CLAIM.url + '/functions/v1/order', {
       method: 'POST',
-      headers: {
-        apikey: CLAIM.key,
-        Authorization: 'Bearer ' + CLAIM.key,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ items: items, buyer: buyer, ino: ino }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        items: items,
+        buyer: field('#cart-em'),
+        name: field('#cart-nm'),
+        address: field('#cart-ad'),
+        ino: ino,
+        lines: lines,
+        total: peso(total()),
+      }),
     })
       .then(function (r) { return r.json(); })
       .then(function (res) {
@@ -336,7 +353,14 @@
           if (cart.length) panel.hidden = false;
           return;
         }
-        /* yes, or an answer we cannot read: the email flow carries it */
+        if (res && res.ok === true && res.mailed === true) {
+          /* claimed and emailed by the shop itself: go say so */
+          sendOff(ino, lines);
+          window.location.assign('ordered.html');
+          return;
+        }
+        /* claimed but not mailed, or an answer we cannot read: FormSubmit
+           carries the emails; the claim (if any) stands */
         claimed = true;
         sendOff(ino, lines);
         panel.submit();

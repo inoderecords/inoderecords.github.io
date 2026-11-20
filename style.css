@@ -971,3 +971,6 @@ body.has-cart { padding-bottom: 3.4em; }
   padding-left: .8em;
 }
 .cart__add--gone { opacity: .35; cursor: default; }
+
+/* the address, taken at checkout so the reply only ever needs a screenshot */
+textarea.order__area { min-height: 4.2em; resize: vertical; font: inherit; font-size: var(--t-note); }

@@ -274,6 +274,13 @@ function buyBlock(r, contact) {
                   <label class="order__label" for="em-${esc(r.id)}">Your email</label>
                   <input class="order__email" id="em-${esc(r.id)}" type="email" name="email"
                          required autocomplete="email" placeholder="you@gmail.com">
+                  <label class="order__label" for="nm-${esc(r.id)}">Your name</label>
+                  <input class="order__email" id="nm-${esc(r.id)}" type="text" name="name"
+                         required maxlength="120" autocomplete="name" placeholder="Juan Dela Cruz">
+                  <label class="order__label" for="ad-${esc(r.id)}">Ship to</label>
+                  <textarea class="order__email order__area" id="ad-${esc(r.id)}" name="address"
+                            required maxlength="500" autocomplete="street-address" rows="3"
+                            placeholder="Street · barangay · city (Lalamove or LBC, shouldered by you) · or say QC meetup"></textarea>
                   <button class="btn btn--buy order__send" type="submit">PLACE ORDER</button>
                   <p class="order__claim">An order is a claim · first confirmed payment gets it</p>
                 </form>
@@ -507,7 +514,7 @@ function thanksPage(contact, v, hasQr) {
         ? 'Pay the exact amount by scanning the GCash QR below<span data-pay></span>.'
         : 'We email you the GCash payment details from the shop address.'
     }</li>
-    <li>Email your payment screenshot and your shipping address (Lalamove or LBC, shouldered by the buyer), or ask for a Quezon City meetup: <a class="done__mail" data-mail href="./">the shop address</a><noscript> &#183; ${entmail}</noscript></li>
+    <li>Reply to your confirmation email with the payment screenshot. We confirm, then we ship. No confirmation in your inbox or spam? Email the screenshot to <a class="done__mail" data-mail href="./">the shop address</a><noscript> &#183; ${entmail}</noscript></li>
   </ol>
 ${
   hasQr
