@@ -119,30 +119,38 @@ Ship to: ${address}
 Confirm the claim in the Supabase dashboard once the payment lands.`;
 
   const user = Deno.env.get('SMTP_USER') ?? '';
+  const port = Number(Deno.env.get('SMTP_PORT') ?? '465');
   let mailed = false;
   try {
     const smtp = new SMTPClient({
       connection: {
         hostname: Deno.env.get('SMTP_HOST') ?? 'smtp.spacemail.com',
-        port: Number(Deno.env.get('SMTP_PORT') ?? '465'),
-        tls: true,
+        port,
+        tls: port === 465, /* 465 is implicit TLS; 587 negotiates STARTTLS */
         auth: { username: user, password: Deno.env.get('SMTP_PASS') ?? '' },
       },
     });
-    await smtp.send({
-      from: `INODERECORDS <${user}>`,
-      to: buyer,
-      subject: `Order placed · ${ino} · INODERECORDS`,
-      content: buyerText,
-    });
-    await smtp.send({
-      from: `INODERECORDS <${user}>`,
-      to: user,
-      replyTo: buyer,
-      subject: `Order · ${total} · ${ino}`,
-      content: shopText,
-    });
-    await smtp.close();
+    /* a blocked port hangs the full TCP timeout; never make a buyer wait
+       through that. Past the deadline the claim stands and we say
+       mailed: false, and the page sends the emails the old way. */
+    const deadline = new Promise<never>((_, no) =>
+      setTimeout(() => no(new Error('mail deadline')), 15000));
+    await Promise.race([deadline, (async () => {
+      await smtp.send({
+        from: `INODERECORDS <${user}>`,
+        to: buyer,
+        subject: `Order placed · ${ino} · INODERECORDS`,
+        content: buyerText,
+      });
+      await smtp.send({
+        from: `INODERECORDS <${user}>`,
+        to: user,
+        replyTo: buyer,
+        subject: `Order · ${total} · ${ino}`,
+        content: shopText,
+      });
+      await smtp.close();
+    })()]);
     mailed = true;
   } catch (_e) {
     /* the claim stands; the caller sends the emails the old way */
