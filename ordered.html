@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0a">
+<meta name="robots" content="noindex">
+<title>INODERECORDS · order placed</title>
+<link rel="icon" href="brand/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css?v=803e0fb4">
+</head>
+<body>
+
+<div class="scan" aria-hidden="true"></div>
+<div class="frame" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+
+<header class="bar">
+  <h1 class="bar__name" aria-label="INODERECORDS"><span aria-hidden="true">IN<svg class="bar__o" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4.1" fill="none" stroke-width="1.2"/><circle class="bar__o-dot" cx="5" cy="5" r="1.6"/></svg>DERECORDS</span></h1>
+  <a class="bar__cta" href="https://www.facebook.com/inoderecords">Message us</a>
+</header>
+
+<main class="done">
+
+  <section data-order hidden>
+    <p class="done__hud">Order placed</p>
+    <p class="done__ino" data-ino><span></span></p>
+    <p class="done__what" data-what></p>
+    <p class="done__payhud">Pay exactly</p>
+    <p class="done__total" data-total></p>
+    <img class="done__qr" src="pay/gcash.png" alt="GCash QR code for INODERECORDS" width="240" height="240">
+    <p class="done__paynote">GCash · scan with your app<span data-pay></span></p>
+    <ol class="done__steps">
+      <li>Your confirmation email repeats everything on this page. Inbox or spam.</li>
+      <li>Reply to it with your payment screenshot. We confirm, then we ship. No email anywhere? Send the screenshot to <a class="done__mail" data-mail href="./">the shop address</a>.</li>
+    </ol>
+    <p class="done__claim">An order is a claim · the first confirmed payment gets the record</p>
+  </section>
+
+  <section data-noorder hidden>
+    <p class="done__hud">No order on this device</p>
+    <p class="done__nonetext">This page shows the payment step for an order placed in this browser, and there is none here. If you ordered, your confirmation email carries everything: the records, the exact total, and the payment steps.</p>
+  </section>
+
+  <noscript>
+    <p class="done__hud">Order placed</p>
+    <p class="done__nonetext">Your confirmation email carries everything: the records, the exact total, and the payment steps. Reply to it with your GCash payment screenshot&nbsp;· &#111;&#114;&#100;&#101;&#114;&#115;&#64;&#105;&#110;&#111;&#100;&#101;&#114;&#101;&#99;&#111;&#114;&#100;&#115;&#46;&#99;&#111;&#109;</p>
+  </noscript>
+
+  <a class="done__back" href="./">&#8592; Back to the records</a>
+</main>
+
+<script>
+(function () {
+  'use strict';
+  var o = null;
+  try { o = JSON.parse(sessionStorage.getItem('inode.order') || 'null'); } catch (e) {}
+  var yes = document.querySelector('[data-order]');
+  var no = document.querySelector('[data-noorder]');
+  if (o && o.ino) {
+    yes.hidden = false;
+    document.querySelector('[data-ino]').firstElementChild.textContent = o.ino;
+    if (o.record) document.querySelector('[data-what]').textContent = o.record;
+    var t = document.querySelector('[data-total]');
+    t.textContent = o.price || '';
+    if (!o.price) {
+      t.hidden = true;
+      document.querySelector('.done__payhud').hidden = true;
+    }
+  } else {
+    no.hidden = false;
+  }
+})();
+(function () {
+  'use strict';
+  var P = ["orders","inoderecords.com"];
+  var addr = P[0] + '\u0040' + P[1];
+  var m = document.querySelector('[data-mail]');
+  if (m) { m.textContent = addr; m.setAttribute('href', 'mailto:' + addr); }
+  var G = {"number":"","name":""};
+  var p = document.querySelector('[data-pay]');
+  if (p && G.number) {
+    p.textContent = ' · or send to ' + G.number + (G.name ? ' (' + G.name + ')' : '');
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+{
+  "charli-lp": {
+    "discs": [
+      "art/charli-lp-disc1.png"
+    ],
+    "open": -1,
+    "source": "catalog",
+    "from": "https://i.discogs.com/QBxtJdsZjz1xQ1pi1jiKPi6G2KbpH5sg1H3PSi6sFT8/rs:fit/g:sm/q:90/h:598/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM3OTYz/NzM0LTE3ODQ4ODY0/NjUtODU2NS5qcGVn.jpeg",
+    "edition": "White Bone"
+  },
+  "chatpile": {
+    "discs": [
+      "art/chatpile-disc1.png"
+    ],
+    "open": -1,
+    "source": "catalog",
+    "from": "https://i.discogs.com/_b2WMm6df4QcvnpKvM9yAml2wlZOYXopu4CSNrI4_DE/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM4NjM0/NDQ3LTE3OTE3MzIz/MzYtMzAxNy5qcGVn.jpeg",
+    "edition": "Stereo, Black vinyl"
+  },
+  "underscores": {
+    "discs": [
+      "art/underscores-disc1.png"
+    ],
+    "open": -1,
+    "source": "catalog",
+    "from": "https://i.discogs.com/0BnVGct5HWhuXDCLAmwbHz-kIqLYf7-_XjJzUbDY4DI/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM3NDEy/NjQ2LTE3ODI3NDY3/NTctOTI3Ni5qcGVn.jpeg",
+    "edition": "Clear"
+  },
+  "phoebe": {
+    "discs": [
+      "art/phoebe-disc1.png"
+    ],
+    "open": -1,
+    "source": "catalog",
+    "from": "art/phoebe-source.webp",
+    "edition": "Rogue Planet Green Glow-in-the-Dark Splatter"
+  }
+}

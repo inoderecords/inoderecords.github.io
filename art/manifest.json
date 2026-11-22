@@ -1,0 +1,39 @@
+{
+  "charli-xcx-music-fashion-film": {
+    "artist": "Charli XCX",
+    "album": "Music, Fashion, Film",
+    "ids": [
+      "charli-lp",
+      "charli-cd"
+    ],
+    "mbid": "15010f36-5433-4a29-9b68-26c13fb4c7ec",
+    "year": "2026"
+  },
+  "phoebe-bridgers-lost-weekend": {
+    "artist": "Phoebe Bridgers",
+    "album": "Lost Weekend",
+    "ids": [
+      "phoebe"
+    ],
+    "mbid": "706578f8-fb48-47f2-806d-a047dc408332",
+    "year": "2026"
+  },
+  "chat-pile-who-loves-the-sun": {
+    "artist": "Chat Pile",
+    "album": "Who Loves the Sun",
+    "ids": [
+      "chatpile"
+    ],
+    "mbid": "c2e68749-0aef-4fdc-adae-c42050c64f6b",
+    "year": "2026"
+  },
+  "underscores-u": {
+    "artist": "Underscores",
+    "album": "U",
+    "ids": [
+      "underscores"
+    ],
+    "mbid": "cec81633-5419-4f92-b0ac-6e9c508a042f",
+    "year": "2026"
+  }
+}
