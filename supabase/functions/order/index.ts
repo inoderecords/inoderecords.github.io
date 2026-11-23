@@ -108,16 +108,16 @@ Deno.serve(async (req) => {
   const dLine = delivery ? `Delivery: ${delivery.label} · ${feeOf(delivery.fee)}` : '';
   const next = delivery?.next || 'We’ll email you the delivery details.';
 
-  const buyerText = `Order placed. Order number: ${ino}
+  const buyerText = `Thanks for your order! Order number: ${ino}
 
 ${what}${dLine ? `\n${dLine}` : ''}
 
 Pay exactly ${total}.
-Reserved for you until ${when}, Philippine time. Unpaid orders go back on sale after that.
+We’re holding your records until ${when}, Philippine time. After that, unpaid records go back on the shelf.
 
 01  Scan the QR with GCash, Maya or any bank app and pay exactly ${total}. The QR is attached to this email.
 02  Screenshot the receipt.
-03  Reply to this email with the screenshot. We confirm, then we ship.
+03  Reply to this email with the screenshot, and we’ll confirm and ship it out.
 
 ${next}
 
@@ -185,13 +185,13 @@ Confirm the claim in the Supabase dashboard once the payment lands.`;
 
   const buyerHtml = skin(
     `Pay exactly ${total} by ${when}. The QR and steps are inside.`,
-    'ORDER PLACED',
+    'THANK YOU &#183; ORDER PLACED',
     label('ORDER NUMBER', 20) +
     text(esc(ino), 16, PAPER, 0) +
     itemTable(rows) +
     label('PAY EXACTLY', 18) +
     `<tr><td style="padding:0 2px 8px;color:${PAPER};font-family:${MONO};font-size:34px;font-weight:bold;">${esc(total)}</td></tr>` +
-    text(`Reserved for you until <b>${esc(when)}</b>, Philippine time. Unpaid orders go back on sale after that.`, 13, PAPER, 18) +
+    text(`We&#8217;re holding your records until <b>${esc(when)}</b>, Philippine time. After that, unpaid records go back on the shelf.`, 13, PAPER, 18) +
     `<tr><td style="padding:0 0 10px;"><table role="presentation" cellpadding="0" cellspacing="0"><tr>` +
     `<td bgcolor="#ffffff" style="background:#ffffff;padding:14px;"><img src="${QR}" width="200" height="200" alt="InstaPay QR for INODERECORDS" style="display:block;width:200px;height:200px;border:0;"></td>` +
     `</tr></table></td></tr>` +
@@ -199,7 +199,7 @@ Confirm the claim in the Supabase dashboard once the payment lands.`;
     `<tr><td style="padding:0;">` +
     step('01', `Scan the QR and pay exactly <b>${esc(total)}</b>.`) +
     step('02', 'Screenshot the receipt.') +
-    step('03', 'Reply to this email with the screenshot. We confirm, then we ship.') +
+    step('03', 'Reply to this email with the screenshot, and we&#8217;ll confirm and ship it out.') +
     `</td></tr>` +
     text(esc(next), 12, DIMC, 0) +
     label('SHIP TO', 24) +

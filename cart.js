@@ -117,7 +117,7 @@
     box.className = "cart";
     box.hidden = true;
     box.setAttribute("aria-label", "Cart");
-    box.innerHTML = '<div class="cart__head"><span class="cart__title" data-cart-n>Cart</span>' + '<button class="cart__close" type="button">Close</button></div>' + '<p class="cart__empty" hidden>Your cart is empty.</p>' + '<form class="cart__panel" method="POST">' + '<input type="text" name="_honey" class="order__hp" tabindex="-1" autocomplete="off">' + '<p class="cart__note" data-note hidden role="status"></p>' + '<ul class="cart__items"></ul>' + (WAYS.length ? '<div class="cart__field cart__dl"><label class="order__label" for="cart-dl">Delivery</label>' + '<select class="order__email order__select" id="cart-dl" name="ship" required><option value="">Choose one</option>' + WAYS.map(option).join("") + "</select></div>" + '<div class="cart__dm" hidden><p class="cart__dm-text" data-dm></p>' + '<a class="btn btn--buy cart__dm-go" href="' + esc(FB) + '" target="_blank" rel="noopener">Message us</a></div>' : "") + '<div class="cart__order">' + '<div class="cart__sum">' + (WAYS.length ? '<div class="cart__line"><span>Records</span><span data-cart-sub></span></div>' + '<div class="cart__line"><span>Delivery</span><span data-cart-ship>Choose above</span></div>' : "") + '<div class="cart__line cart__line--total"><span>Total</span><span data-cart-total></span></div></div>' + '<div class="cart__fields">' + field("cart-em", "Email", '<input class="order__email" id="cart-em" type="email" name="email" required ' + 'maxlength="254" autocomplete="email" placeholder="you@gmail.com">', "Your order confirmation goes here.") + field("cart-nm", "Name", '<input class="order__email" id="cart-nm" type="text" name="name" required ' + 'maxlength="120" autocomplete="name" placeholder="Juan Dela Cruz">') + field("cart-ph", "Mobile number", '<input class="order__email" id="cart-ph" type="tel" name="phone" required ' + 'inputmode="tel" autocomplete="tel" pattern="[0-9+ \\-]{7,20}" ' + 'title="A mobile number, like 0917 123 4567" placeholder="0917 123 4567">', "For the courier.") + field("cart-ad", "Delivery address", '<textarea class="order__email order__area" id="cart-ad" name="address" required ' + 'maxlength="500" autocomplete="street-address" rows="3" ' + 'placeholder="Street, barangay, city"></textarea>') + "</div>" + '<button class="btn btn--buy order__send" type="submit">Place order</button>' + '<p class="order__fine">Your records are reserved for 24 hours while you pay.</p>' + "</div></form>";
+    box.innerHTML = '<div class="cart__head"><span class="cart__title" data-cart-n>Cart</span>' + '<button class="cart__close" type="button">Close</button></div>' + '<p class="cart__empty" hidden>Your cart is empty.</p>' + '<form class="cart__panel" method="POST">' + '<input type="text" name="_honey" class="order__hp" tabindex="-1" autocomplete="off">' + '<p class="cart__note" data-note hidden role="status"></p>' + '<ul class="cart__items"></ul>' + (WAYS.length ? '<div class="cart__field cart__dl"><label class="order__label" for="cart-dl">Delivery</label>' + '<select class="order__email order__select" id="cart-dl" name="ship" required><option value="">Choose one</option>' + WAYS.map(option).join("") + "</select></div>" + '<div class="cart__dm" hidden><p class="cart__dm-text" data-dm></p>' + '<a class="btn btn--buy cart__dm-go" href="' + esc(FB) + '" target="_blank" rel="noopener">Message us</a></div>' : "") + '<div class="cart__order">' + '<div class="cart__sum">' + (WAYS.length ? '<div class="cart__line"><span>Records</span><span data-cart-sub></span></div>' + '<div class="cart__line"><span>Delivery</span><span data-cart-ship>Choose above</span></div>' : "") + '<div class="cart__line cart__line--total"><span>Total</span><span data-cart-total></span></div></div>' + '<div class="cart__fields">' + field("cart-em", "Email", '<input class="order__email" id="cart-em" type="email" name="email" required ' + 'maxlength="254" autocomplete="email" placeholder="you@gmail.com">', "We’ll send your order confirmation here.") + field("cart-nm", "Name", '<input class="order__email" id="cart-nm" type="text" name="name" required ' + 'maxlength="120" autocomplete="name" placeholder="Juan Dela Cruz">') + field("cart-ph", "Mobile number", '<input class="order__email" id="cart-ph" type="tel" name="phone" required ' + 'inputmode="tel" autocomplete="tel" pattern="[0-9+ \\-]{7,20}" ' + 'title="A mobile number, like 0917 123 4567" placeholder="0917 123 4567">', "So the courier can reach you.") + field("cart-ad", "Delivery address", '<textarea class="order__email order__area" id="cart-ad" name="address" required ' + 'maxlength="500" autocomplete="street-address" rows="3" ' + 'placeholder="Street, barangay, city"></textarea>') + "</div>" + '<button class="btn btn--buy order__send" type="submit">Place order</button>' + '<p class="order__fine">We’ll hold your records for 24 hours while you pay.</p>' + "</div></form>";
     document.body.appendChild(box);
     var badge = icon.querySelector("[data-cart-badge]");
     var panel = box.querySelector(".cart__panel");
@@ -172,7 +172,7 @@
         el.classList.add(cls);
         setTimeout(function() {
             el.classList.remove(cls);
-        }, 380);
+        }, 480);
     }
     for (var j = 0; j < order.length; j++) {
         (function(r) {
@@ -190,7 +190,11 @@
                 save();
                 render();
                 pop(badge, "pop");
+                pop(icon, "jolt");
                 pop(b, "cart__add--flash");
+                b.textContent = "ADDED";
+                clearTimeout(b._added);
+                b._added = setTimeout(render, 1100);
             });
             r.btn = b;
             buy.appendChild(b);
@@ -317,7 +321,7 @@
         var what = cart.length === 1 ? recs[cart[0]].title : cart.length + " records";
         var d = way();
         var dText = d ? d.label + " · " + feeText(d) : "";
-        var reply = "We received your order, " + ino + ": " + lines.join("; ") + (dText ? ". Delivery: " + dText : "") + ". Total " + peso(grand()) + ". " + "Your records are reserved for 24 hours while you pay. " + "To pay, open " + NEXT + " in the browser you ordered from and scan the QR with GCash, Maya or any bank app. " + "Then send your payment screenshot to the shop email shown on that page. " + (d ? d.next + " " : "") + "INODERECORDS · Quezon City";
+        var reply = "We received your order, " + ino + ": " + lines.join("; ") + (dText ? ". Delivery: " + dText : "") + ". Total " + peso(grand()) + ". " + "We’ll hold your records for 24 hours while you pay. " + "To pay, open " + NEXT + " in the browser you ordered from and scan the QR with GCash, Maya or any bank app. " + "Then send your payment screenshot to the shop email shown on that page. " + (d ? d.next + " " : "") + "INODERECORDS · Quezon City";
         var add = function(n, v) {
             var inp = document.createElement("input");
             inp.type = "hidden";
@@ -417,7 +421,7 @@
                     if (cart[i] === res.record) cart.splice(i, 1);
                 }
                 save();
-                note.textContent = "Just sold: " + name + ". We took it out of your cart.";
+                note.textContent = "Sorry, " + name + " just sold. We’ve taken it out of your cart.";
                 note.hidden = false;
                 setBusy(false);
                 refreshAvail();
@@ -426,7 +430,7 @@
                 return;
             }
             if (res && res.ok === false && res.why === "bad cart") {
-                note.textContent = "Something in the form didn’t go through. Check your details and try again, or message us.";
+                note.textContent = "Sorry, something didn’t go through. Please check your details and try again, or message us and we’ll help.";
                 note.hidden = false;
                 setBusy(false);
                 return;

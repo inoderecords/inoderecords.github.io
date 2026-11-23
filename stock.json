@@ -2,7 +2,7 @@
   "contact": {
     "page": "https://www.facebook.com/inoderecords",
     "shipping": "Ships nationwide via J&T.",
-    "meetup": "Meetup or same-day Lalamove? Message us to arrange.",
+    "meetup": "Prefer a meetup or same-day Lalamove? Just message us and we’ll sort it out.",
     "updated": "2026-10-27"
   },
   "delivery": [
@@ -10,31 +10,31 @@
       "id": "jt-mm",
       "label": "J&T · Metro Manila",
       "fee": 120,
-      "next": "Ships via J&T. We’ll email you the tracking number once it’s sent."
+      "next": "We’ll ship it via J&T and email you the tracking number once it’s on its way."
     },
     {
       "id": "jt-luzon",
       "label": "J&T · Rest of Luzon",
       "fee": 170,
-      "next": "Ships via J&T. We’ll email you the tracking number once it’s sent."
+      "next": "We’ll ship it via J&T and email you the tracking number once it’s on its way."
     },
     {
       "id": "jt-vismin",
       "label": "J&T · Visayas and Mindanao",
       "fee": 200,
-      "next": "Ships via J&T. We’ll email you the tracking number once it’s sent."
+      "next": "We’ll ship it via J&T and email you the tracking number once it’s on its way."
     },
     {
       "id": "meetup",
       "label": "Meetup",
       "dm": true,
-      "note": "We meet at SM Megamall, SM City Grand Central or SM North EDSA. Message us which records you want and we’ll pick a day and time."
+      "note": "We can meet you at SM Megamall, SM City Grand Central or SM North EDSA. Just message us the records you’d like, and we’ll find a day and time that works for you."
     },
     {
       "id": "lalamove",
-      "label": "Lalamove · Metro Manila, same day",
+      "label": "Same-day Lalamove",
       "dm": true,
-      "note": "Message us which records you want and where you are, and we’ll book it. The Lalamove fee is on you."
+      "note": "Need it today? We can send it by Lalamove anywhere in Metro Manila. Just message us the records you’d like and your location, and we’ll take care of the booking. The Lalamove fee is shouldered by the buyer."
     }
   ],
   "records": [

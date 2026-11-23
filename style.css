@@ -840,17 +840,32 @@ a { color: inherit; }
 }
 .bar__cart-n[hidden] { display: none; }
 @media (prefers-reduced-motion: no-preference) {
-  .bar__cart-n.pop { animation: cart-pop .32s steps(1, end); }
-  .cart__add--flash { animation: cart-flash .32s steps(1, end); }
+  .bar__cart-n.pop { animation: cart-pop .45s steps(1, end); }
+  .bar__cart.jolt svg { animation: cart-jolt .45s steps(1, end); }
+  .cart__add--flash { animation: cart-flash .45s steps(1, end); }
+  .cart:not([hidden]) { animation: cart-open .2s steps(5, end); }
 }
 @keyframes cart-pop {
-  0% { background: var(--blue); color: var(--paper); transform: translateY(-3px); }
-  50% { background: var(--paper); color: var(--ink); transform: translateY(1px); }
+  0% { background: var(--blue); color: var(--paper); transform: scale(1.8) translateY(-2px); }
+  33% { background: var(--blue); color: var(--paper); transform: scale(1.3); }
+  66% { background: var(--paper); color: var(--ink); transform: scale(1.1); }
+  100% { transform: none; }
+}
+@keyframes cart-jolt {
+  0% { color: var(--blue); transform: translateY(-5px) rotate(-12deg); }
+  33% { color: var(--paper); transform: translateY(2px) rotate(8deg); }
+  66% { color: var(--paper); transform: translateY(-2px) rotate(-3deg); }
   100% { transform: none; }
 }
 @keyframes cart-flash {
-  0% { background: var(--paper); color: var(--ink); }
-  50% { background: var(--blue); color: var(--paper); }
+  0% { opacity: 1; background: var(--blue); border-color: var(--blue); color: var(--paper); }
+  25% { opacity: 1; background: var(--paper); border-color: var(--paper); color: var(--ink); }
+  50% { opacity: 1; background: var(--blue); border-color: var(--blue); color: var(--paper); }
+  75% { opacity: 1; background: var(--paper); border-color: var(--paper); color: var(--ink); }
+}
+@keyframes cart-open {
+  from { clip-path: inset(0 0 100% 0); }
+  to { clip-path: inset(0 0 0 0); }
 }
 .cart {
   position: fixed;
