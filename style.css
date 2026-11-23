@@ -20,12 +20,12 @@
   --mono: 'Obel Mono', ui-monospace, 'Cascadia Mono', Menlo, monospace;
 
   
-  --t-hud: .625rem;
-  --t-note: .72rem;
-  --t-body: .845rem;
-  --t-album: clamp(.9rem, .82rem + .4vw, 1.06rem);
-  --t-artist: clamp(1.6rem, 1.1rem + 2.4vw, 2.65rem);
-  --t-price: clamp(1.5rem, 1.25rem + 1vw, 1.9rem);
+  --t-hud: .72rem;
+  --t-note: .82rem;
+  --t-body: .97rem;
+  --t-album: clamp(1rem, .9rem + .5vw, 1.22rem);
+  --t-artist: clamp(1.8rem, 1.2rem + 2.8vw, 3.1rem);
+  --t-price: clamp(1.7rem, 1.4rem + 1.2vw, 2.25rem);
 
   --ls-hud: .14em;
   --ls-note: .12em;
@@ -46,7 +46,7 @@ body {
   background: var(--bg);
   color: var(--fg);
   font-family: var(--mono);
-  font-size: clamp(.92rem, .88rem + .18vw, 1rem);
+  font-size: clamp(1rem, .94rem + .25vw, 1.12rem);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }
@@ -97,7 +97,7 @@ a { color: inherit; }
   margin: 0;
   display: flex;
   align-items: baseline;
-  font-size: .8rem;
+  font-size: .92rem;
   font-weight: 800;
   letter-spacing: .08em;
 }
@@ -244,7 +244,7 @@ a { color: inherit; }
   padding: .9em 1.7em;
   border: 1px solid var(--paper);
   font-family: var(--mono);
-  font-size: .75rem;
+  font-size: .84rem;
   font-weight: 700;
   letter-spacing: var(--ls-hud);
   text-transform: uppercase;
@@ -509,7 +509,7 @@ a { color: inherit; }
   padding: 0;
   color: var(--dim);
   font-family: var(--mono);
-  font-size: 1.2rem;
+  font-size: 1.35rem;
   line-height: 1;
   cursor: pointer;
   transition: color var(--d) steps(2);
@@ -594,7 +594,7 @@ a { color: inherit; }
   justify-items: start;
   gap: 2px;
   padding: var(--pad);
-  font-size: clamp(.72rem, 1.3vw, .95rem);
+  font-size: clamp(.8rem, 1.4vw, 1.05rem);
   font-weight: 500;
   letter-spacing: var(--ls-hud);
   text-transform: uppercase;
@@ -696,7 +696,7 @@ a { color: inherit; }
 }
 .done__ino {
   margin: .25em 0 0;
-  font-size: clamp(1.7rem, 5vw, 2.5rem);
+  font-size: clamp(1.9rem, 5vw, 2.8rem);
   font-weight: 800;
   letter-spacing: .03em;
   font-variant-numeric: tabular-nums;
@@ -785,7 +785,7 @@ a { color: inherit; }
 }
 .bar__cart:hover, .bar__cart:focus-visible { color: var(--paper); }
 .bar__cart:focus-visible { outline: 1px solid var(--paper); outline-offset: 2px; }
-.bar__cart svg { width: 1.3rem; height: 1.3rem; display: block; }
+.bar__cart svg { width: 1.5rem; height: 1.5rem; display: block; }
 .bar__cart-n {
   position: absolute;
   top: -3px;
@@ -794,7 +794,7 @@ a { color: inherit; }
   padding: .1em .3em;
   background: var(--paper);
   color: var(--ink);
-  font-size: .5rem;
+  font-size: .58rem;
   font-weight: 800;
   letter-spacing: .04em;
   line-height: 1.6;
