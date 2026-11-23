@@ -14,7 +14,6 @@ const reply = (body: unknown, status = 200) =>
 
 const SITE = 'https://inoderecords.com';
 const QR = `${SITE}/pay/gcash.png`;
-const FB = 'https://www.facebook.com/inoderecords';
 const HOLD_MS = 24 * 3600 * 1000;
 
 type Row = { artist: string; album: string; detail: string; price: string };
@@ -67,16 +66,15 @@ Deno.serve(async (req) => {
       next: String(dIn.next ?? '').slice(0, 300),
     }
     : null;
-  const meet = delivery?.id === 'meetup';
 
   if (
-    (delivery && (!/^[a-z0-9-]{1,20}$/.test(delivery.id) || !delivery.label)) ||
+    (delivery && (!/^[a-z0-9-]{1,20}$/.test(delivery.id) || !delivery.label || delivery.fee === null)) ||
     !items.length || items.length > 20 ||
     items.some((i) => !/^[a-z0-9-]{1,40}$/.test(i.record) || !(i.n >= 1 && i.n <= 10)) ||
     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyer) || buyer.length > 254 ||
     !/^ino 0x[0-9A-F]{1,12}$/.test(ino) ||
     lines.some((l) => l.length > 300) || total.length > 40 ||
-    !name || name.length > 120 || (!address && !meet) || address.length > 500 ||
+    !name || name.length > 120 || !address || address.length > 500 ||
     (phone !== '' && !/^[0-9+().\s-]{7,20}$/.test(phone))
   ) {
     return reply({ ok: false, why: 'bad cart' }, 400);
@@ -105,13 +103,10 @@ Deno.serve(async (req) => {
     : (lines.length ? lines : items.map((i) => `${i.record} x${i.n}`))
       .map((l) => ({ artist: l, album: '', detail: '', price: '' }));
   const what = rows.map((r) => [r.artist, r.album, r.detail, r.price].filter(Boolean).join(' · ')).join('\n');
-  const shipTo = [name, phone, meet ? '' : address].filter(Boolean).join('\n');
-  const place = address || (meet ? 'Set on Facebook' : '');
-  const feeOf = (fee: number | null) =>
-    fee === 0 ? 'Free' : fee === null ? 'Paid by you' : `₱${fee.toLocaleString('en-US')}`;
+  const shipTo = [name, phone, address].filter(Boolean).join('\n');
+  const feeOf = (fee: number | null) => (fee ? `₱${fee.toLocaleString('en-US')}` : 'Free');
   const dLine = delivery ? `Delivery: ${delivery.label} · ${feeOf(delivery.fee)}` : '';
   const next = delivery?.next || 'We’ll email you the delivery details.';
-  const placeLabel = meet ? 'Meetup' : 'Ship to';
 
   const buyerText = `Order placed. Order number: ${ino}
 
@@ -122,11 +117,11 @@ Reserved for you until ${when}, Philippine time. Unpaid orders go back on sale a
 
 01  Scan the QR with GCash, Maya or any bank app and pay exactly ${total}. The QR is attached to this email.
 02  Screenshot the receipt.
-03  Reply to this email with the screenshot. We confirm${meet ? ' by email' : ', then we ship'}.
+03  Reply to this email with the screenshot. We confirm, then we ship.
 
-${next}${meet ? `\n${FB}` : ''}
+${next}
 
-${placeLabel}
+Ship to
 ${shipTo}
 
 INODERECORDS · Quezon City
@@ -138,7 +133,7 @@ Total ${total}
 Reserved until ${when}
 
 Buyer: ${name} <${buyer}>${phone ? `\nMobile: ${phone}` : ''}
-${placeLabel}: ${place}
+Ship to: ${address}
 
 Confirm the claim in the Supabase dashboard once the payment lands.`;
 
@@ -204,15 +199,10 @@ Confirm the claim in the Supabase dashboard once the payment lands.`;
     `<tr><td style="padding:0;">` +
     step('01', `Scan the QR and pay exactly <b>${esc(total)}</b>.`) +
     step('02', 'Screenshot the receipt.') +
-    step('03', `Reply to this email with the screenshot. We confirm${meet ? ' by email' : ', then we ship'}.`) +
+    step('03', 'Reply to this email with the screenshot. We confirm, then we ship.') +
     `</td></tr>` +
-    text(esc(next), meet ? 13 : 12, meet ? PAPER : DIMC, 0) +
-    (meet
-      ? `<tr><td style="padding:14px 0 0;"><table role="presentation" cellpadding="0" cellspacing="0"><tr>` +
-        `<td bgcolor="${PAPER}" style="background:${PAPER};padding:11px 18px;"><a href="${FB}" style="color:${INK};font-family:${MONO};font-size:12px;font-weight:bold;letter-spacing:2px;text-decoration:none;">MESSAGE US ON FACEBOOK</a></td>` +
-        `</tr></table></td></tr>`
-      : '') +
-    label(placeLabel.toUpperCase(), 24) +
+    text(esc(next), 12, DIMC, 0) +
+    label('SHIP TO', 24) +
     text(br(shipTo), 13, PAPER, 0)
   );
 
@@ -226,8 +216,8 @@ Confirm the claim in the Supabase dashboard once the payment lands.`;
     text(`Reserved until ${esc(when)}. Unpaid, it goes back on sale after that.`, 12, DIMC, 0) +
     label('BUYER', 24) +
     text(`${esc(name)} &lt;${esc(buyer)}&gt;${phone ? `<br>${esc(phone)}` : ''}`, 13, PAPER, 0) +
-    label(placeLabel.toUpperCase(), 18) +
-    text(br(place), 13, PAPER, 18) +
+    label('SHIP TO', 18) +
+    text(br(address), 13, PAPER, 18) +
     text('Confirm the claim in the Supabase dashboard once the payment lands.', 12, DIMC, 0)
   );
 

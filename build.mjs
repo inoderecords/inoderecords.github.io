@@ -108,7 +108,7 @@ const titleOf = r => `${r.artist} · ${r.album}` + (r.variant && r.variant !== r
 
 const detailOf = r => r.format + (r.variant && r.variant !== r.format ? ` · ${r.variant}` : "");
 
-const feeText = d => d.fee === 0 ? "Free" : d.fee === null ? "Paid by you" : peso(d.fee);
+const feeText = d => d.dm ? "Message us on Facebook" : d.fee === 0 ? "Free" : peso(d.fee);
 
 function checkDelivery(list) {
     if (!Array.isArray(list) || !list.length) throw new Error("stock.json: delivery options missing");
@@ -116,9 +116,15 @@ function checkDelivery(list) {
     for (const d of list) {
         if (!/^[a-z0-9-]{1,20}$/.test(d.id || "") || seen.has(d.id)) throw new Error(`delivery: bad or repeated id "${d.id}"`);
         seen.add(d.id);
-        if (!d.label || !d.next) throw new Error(`delivery ${d.id}: needs "label" and "next"`);
-        if (!(d.fee === null || Number.isInteger(d.fee) && d.fee >= 0)) throw new Error(`delivery ${d.id}: fee must be a whole number or null`);
+        if (!d.label) throw new Error(`delivery ${d.id}: needs "label"`);
+        if (d.dm) {
+            if (!d.note) throw new Error(`delivery ${d.id}: a Facebook-only option needs a "note"`);
+            continue;
+        }
+        if (!d.next) throw new Error(`delivery ${d.id}: needs "next"`);
+        if (!(Number.isInteger(d.fee) && d.fee >= 0)) throw new Error(`delivery ${d.id}: fee must be a whole number`);
     }
+    if (!list.some(d => !d.dm)) throw new Error("delivery: at least one option must be orderable on the site");
 }
 
 function buyBlock(r, contact) {
@@ -128,8 +134,8 @@ function buyBlock(r, contact) {
     }
     const title = titleOf(r);
     const reply = `We received your order: ${title}, ${peso(r.price)}. ` + "Your record is reserved for 24 hours while you pay. " + `To pay, open ${ORDER.site}/ordered.html in the browser you ordered from ` + "and scan the QR with GCash, Maya or any bank app. " + "Then send your payment screenshot to the shop email shown on that page. " + "Your total is the record plus the delivery fee you chose. We email you the delivery details. INODERECORDS · Quezon City";
-    const options = stock.delivery.map(d => `<option>${esc(d.label)} · ${esc(feeText(d))}</option>`).join("");
-    return `<div class="rec__buy">\n              ${amt}\n              <details class="order">\n                <summary class="btn btn--buy"\n                         aria-label="Buy ${esc(r.artist)}, ${esc(r.album)}">BUY</summary>\n                <form class="order__form" method="POST"\n                      action="https://formsubmit.co/${esc(ORDER.endpoint)}">\n                  <input type="hidden" name="_subject" value="Order · ${esc(title)} · ${peso(r.price)}">\n                  <input type="hidden" name="_template" value="table">\n                  <input type="hidden" name="_next" value="${esc(ORDER.site)}/ordered.html">\n                  <input type="hidden" name="_autoresponse" value="${esc(reply)}">\n                  <input type="text" name="_honey" class="order__hp" tabindex="-1" autocomplete="off">\n                  <input type="hidden" name="record" value="${esc(title)}">\n                  <input type="hidden" name="price" value="${peso(r.price)}">\n                  <input type="hidden" name="order" value="">\n                  <label class="order__label" for="em-${esc(r.id)}">Email</label>\n                  <input class="order__email" id="em-${esc(r.id)}" type="email" name="email"\n                         required maxlength="254" autocomplete="email" placeholder="you@gmail.com">\n                  <label class="order__label" for="nm-${esc(r.id)}">Name</label>\n                  <input class="order__email" id="nm-${esc(r.id)}" type="text" name="name"\n                         required maxlength="120" autocomplete="name" placeholder="Juan Dela Cruz">\n                  <label class="order__label" for="ph-${esc(r.id)}">Mobile number</label>\n                  <input class="order__email" id="ph-${esc(r.id)}" type="tel" name="phone"\n                         required inputmode="tel" autocomplete="tel" placeholder="0917 123 4567">\n                  <label class="order__label" for="dl-${esc(r.id)}">Delivery</label>\n                  <select class="order__email" id="dl-${esc(r.id)}" name="delivery" required><option value="">Choose one</option>${options}</select>\n                  <label class="order__label" for="ad-${esc(r.id)}">Address or meetup spot</label>\n                  <textarea class="order__email order__area" id="ad-${esc(r.id)}" name="address"\n                            required maxlength="500" autocomplete="street-address" rows="3"\n                            placeholder="Street, barangay, city"></textarea>\n                  <button class="btn btn--buy order__send" type="submit">Place order</button>\n                  <p class="order__fine">Your record is reserved for 24 hours while you pay.</p>\n                </form>\n              </details>\n            </div>`;
+    const options = stock.delivery.filter(d => !d.dm).map(d => `<option>${esc(d.label)} · ${esc(feeText(d))}</option>`).join("");
+    return `<div class="rec__buy">\n              ${amt}\n              <details class="order">\n                <summary class="btn btn--buy"\n                         aria-label="Buy ${esc(r.artist)}, ${esc(r.album)}">BUY</summary>\n                <form class="order__form" method="POST"\n                      action="https://formsubmit.co/${esc(ORDER.endpoint)}">\n                  <input type="hidden" name="_subject" value="Order · ${esc(title)} · ${peso(r.price)}">\n                  <input type="hidden" name="_template" value="table">\n                  <input type="hidden" name="_next" value="${esc(ORDER.site)}/ordered.html">\n                  <input type="hidden" name="_autoresponse" value="${esc(reply)}">\n                  <input type="text" name="_honey" class="order__hp" tabindex="-1" autocomplete="off">\n                  <input type="hidden" name="record" value="${esc(title)}">\n                  <input type="hidden" name="price" value="${peso(r.price)}">\n                  <input type="hidden" name="order" value="">\n                  <label class="order__label" for="em-${esc(r.id)}">Email</label>\n                  <input class="order__email" id="em-${esc(r.id)}" type="email" name="email"\n                         required maxlength="254" autocomplete="email" placeholder="you@gmail.com">\n                  <label class="order__label" for="nm-${esc(r.id)}">Name</label>\n                  <input class="order__email" id="nm-${esc(r.id)}" type="text" name="name"\n                         required maxlength="120" autocomplete="name" placeholder="Juan Dela Cruz">\n                  <label class="order__label" for="ph-${esc(r.id)}">Mobile number</label>\n                  <input class="order__email" id="ph-${esc(r.id)}" type="tel" name="phone"\n                         required inputmode="tel" autocomplete="tel" placeholder="0917 123 4567">\n                  <label class="order__label" for="dl-${esc(r.id)}">Delivery</label>\n                  <select class="order__email" id="dl-${esc(r.id)}" name="delivery" required><option value="">Choose one</option>${options}</select>\n                  <p class="order__fine">Meetup or same-day Lalamove? <a href="${esc(contact.page)}">Message us on Facebook</a>.</p>\n                  <label class="order__label" for="ad-${esc(r.id)}">Delivery address</label>\n                  <textarea class="order__email order__area" id="ad-${esc(r.id)}" name="address"\n                            required maxlength="500" autocomplete="street-address" rows="3"\n                            placeholder="Street, barangay, city"></textarea>\n                  <button class="btn btn--buy order__send" type="submit">Place order</button>\n                  <p class="order__fine">Your record is reserved for 24 hours while you pay.</p>\n                </form>\n              </details>\n            </div>`;
 }
 
 function card(r, contact, i, all, art, disc) {
@@ -147,9 +153,10 @@ function page(stock, art, disc, v) {
     const deliveryJson = JSON.stringify(stock.delivery.map(d => ({
         id: d.id,
         label: d.label,
-        fee: d.fee,
+        dm: !!d.dm,
+        fee: d.dm ? null : d.fee,
         note: d.note || "",
-        next: d.next
+        next: d.next || ""
     }))).replace(/</g, "\\u003c");
     const n = records.reduce((a, r) => a + r.qty, 0);
     const artists = records.map(r => r.artist).filter((v, i, a) => a.indexOf(v) === i);
@@ -203,7 +210,6 @@ ${hasQr ? `    <img class="done__qr" src="pay/gcash.png" alt="InstaPay QR code f
       <li>Reply to your confirmation email with the screenshot. We confirm by email. Can’t find the email? Check spam, or send it to <a class="done__mail" data-mail href="./">the shop address</a>.</li>
     </ol>
     <p class="done__ship" data-next>We’ll email you the delivery details.</p>
-    <p class="done__fb" data-fb hidden><a class="btn" href="${esc(contact.page)}" target="_blank" rel="noopener">Message us on Facebook</a></p>
   </section>
 
   <section data-noorder hidden>
@@ -263,7 +269,6 @@ ${hasQr ? `    <img class="done__qr" src="pay/gcash.png" alt="InstaPay QR code f
     dl.appendChild(span('done__item-px', dv.fee || ''));
     ul.appendChild(dl);
     if (dv.next) document.querySelector('[data-next]').textContent = dv.next;
-    if (dv.id === 'meetup') document.querySelector('[data-fb]').hidden = false;
   }
   var ts = document.querySelectorAll('[data-total]');
   for (var j = 0; j < ts.length; j++) ts[j].textContent = o.total || '';
