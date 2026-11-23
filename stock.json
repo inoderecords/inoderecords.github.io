@@ -2,7 +2,7 @@
   "contact": {
     "page": "https://www.facebook.com/inoderecords",
     "shipping": "Ships nationwide via J&T.",
-    "meetup": "Meetups and same-day Lalamove: message us on Facebook.",
+    "meetup": "Meetup or same-day Lalamove? Message us to arrange.",
     "updated": "2026-10-27"
   },
   "delivery": [
@@ -28,13 +28,13 @@
       "id": "meetup",
       "label": "Meetup",
       "dm": true,
-      "note": "Meetups are at SM Megamall, SM City Grand Central or SM North EDSA, and we set them up on Facebook. Message us the records you want."
+      "note": "We meet at SM Megamall, SM City Grand Central or SM North EDSA. Message us which records you want and we’ll pick a day and time."
     },
     {
       "id": "lalamove",
-      "label": "Lalamove · same day, Metro Manila",
+      "label": "Lalamove · Metro Manila, same day",
       "dm": true,
-      "note": "Same-day Lalamove is set up on Facebook, and the Lalamove fee is paid by you. Message us the records you want and your area."
+      "note": "Message us which records you want and where you are, and we’ll book it. The Lalamove fee is on you."
     }
   ],
   "records": [
