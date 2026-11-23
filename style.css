@@ -755,6 +755,8 @@ a { color: inherit; }
   line-height: 1.6;
   color: var(--dim);
 }
+.done__fb { margin: 1.1em 0 0; }
+.done__fb[hidden] { display: none; }
 .done__steps {
   margin: 2.4em 0 0;
   padding: 0;
@@ -988,6 +990,17 @@ a { color: inherit; }
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
+.cart__meet {
+  margin: .5em 0 0;
+  padding-left: .8em;
+  border-left: 2px solid var(--paper);
+  color: var(--paper);
+  font-size: var(--t-note);
+  line-height: 1.55;
+}
+.cart__meet a { color: var(--paper); font-weight: 700; text-underline-offset: .2em; }
+.cart__meet a:hover, .cart__meet a:focus-visible { background: var(--paper); color: var(--ink); text-decoration: none; }
+.cart__meet[hidden], .cart__field[hidden] { display: none; }
 .cart__sum { display: grid; gap: .3em; margin-top: 1.4em; }
 .cart__line {
   display: flex;

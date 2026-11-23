@@ -203,6 +203,7 @@ ${hasQr ? `    <img class="done__qr" src="pay/gcash.png" alt="InstaPay QR code f
       <li>Reply to your confirmation email with the screenshot. We confirm by email. Can’t find the email? Check spam, or send it to <a class="done__mail" data-mail href="./">the shop address</a>.</li>
     </ol>
     <p class="done__ship" data-next>We’ll email you the delivery details.</p>
+    <p class="done__fb" data-fb hidden><a class="btn" href="${esc(contact.page)}" target="_blank" rel="noopener">Message us on Facebook</a></p>
   </section>
 
   <section data-noorder hidden>
@@ -262,6 +263,7 @@ ${hasQr ? `    <img class="done__qr" src="pay/gcash.png" alt="InstaPay QR code f
     dl.appendChild(span('done__item-px', dv.fee || ''));
     ul.appendChild(dl);
     if (dv.next) document.querySelector('[data-next]').textContent = dv.next;
+    if (dv.id === 'meetup') document.querySelector('[data-fb]').hidden = false;
   }
   var ts = document.querySelectorAll('[data-total]');
   for (var j = 0; j < ts.length; j++) ts[j].textContent = o.total || '';

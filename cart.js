@@ -20,6 +20,7 @@
         WAYS = [];
     }
     var ship = null;
+    var FB = (document.querySelector(".bar__cta") || {}).href || "";
     var recs = {};
     var order = [];
     var lis = document.querySelectorAll(".rec[data-title]");
@@ -116,7 +117,7 @@
     box.className = "cart";
     box.hidden = true;
     box.setAttribute("aria-label", "Cart");
-    box.innerHTML = '<div class="cart__head"><span class="cart__title" data-cart-n>Cart</span>' + '<button class="cart__close" type="button">Close</button></div>' + '<p class="cart__empty" hidden>Your cart is empty.</p>' + '<form class="cart__panel" method="POST">' + '<input type="text" name="_honey" class="order__hp" tabindex="-1" autocomplete="off">' + '<p class="cart__note" data-note hidden role="status"></p>' + '<ul class="cart__items"></ul>' + (WAYS.length ? '<fieldset class="cart__ways"><legend class="order__label">Delivery</legend>' + WAYS.map(radio).join("") + "</fieldset>" : "") + '<div class="cart__sum">' + (WAYS.length ? '<div class="cart__line"><span>Records</span><span data-cart-sub></span></div>' + '<div class="cart__line"><span>Delivery</span><span data-cart-ship>Choose above</span></div>' : "") + '<div class="cart__line cart__line--total"><span>Total</span><span data-cart-total></span></div></div>' + '<div class="cart__fields">' + field("cart-em", "Email", '<input class="order__email" id="cart-em" type="email" name="email" required ' + 'maxlength="254" autocomplete="email" placeholder="you@gmail.com">', "Your order confirmation goes here.") + field("cart-nm", "Name", '<input class="order__email" id="cart-nm" type="text" name="name" required ' + 'maxlength="120" autocomplete="name" placeholder="Juan Dela Cruz">') + field("cart-ph", "Mobile number", '<input class="order__email" id="cart-ph" type="tel" name="phone" required ' + 'inputmode="tel" autocomplete="tel" pattern="[0-9+ \\-]{7,20}" ' + 'title="A mobile number, like 0917 123 4567" placeholder="0917 123 4567">', "For the courier or the meetup.") + field("cart-ad", "Delivery address", '<textarea class="order__email order__area" id="cart-ad" name="address" required ' + 'maxlength="500" autocomplete="street-address" rows="3" ' + 'placeholder="Street, barangay, city"></textarea>') + "</div>" + '<button class="btn btn--buy order__send" type="submit">Place order</button>' + '<p class="order__fine">Your records are reserved for 24 hours while you pay.</p>' + "</form>";
+    box.innerHTML = '<div class="cart__head"><span class="cart__title" data-cart-n>Cart</span>' + '<button class="cart__close" type="button">Close</button></div>' + '<p class="cart__empty" hidden>Your cart is empty.</p>' + '<form class="cart__panel" method="POST">' + '<input type="text" name="_honey" class="order__hp" tabindex="-1" autocomplete="off">' + '<p class="cart__note" data-note hidden role="status"></p>' + '<ul class="cart__items"></ul>' + (WAYS.length ? '<fieldset class="cart__ways"><legend class="order__label">Delivery</legend>' + WAYS.map(radio).join("") + "</fieldset>" + '<p class="cart__meet" hidden>After you order, ' + (FB ? '<a href="' + esc(FB) + '" target="_blank" rel="noopener">message us on Facebook</a>' : "message us on Facebook") + " to set the day, time and spot.</p>" : "") + '<div class="cart__sum">' + (WAYS.length ? '<div class="cart__line"><span>Records</span><span data-cart-sub></span></div>' + '<div class="cart__line"><span>Delivery</span><span data-cart-ship>Choose above</span></div>' : "") + '<div class="cart__line cart__line--total"><span>Total</span><span data-cart-total></span></div></div>' + '<div class="cart__fields">' + field("cart-em", "Email", '<input class="order__email" id="cart-em" type="email" name="email" required ' + 'maxlength="254" autocomplete="email" placeholder="you@gmail.com">', "Your order confirmation goes here.") + field("cart-nm", "Name", '<input class="order__email" id="cart-nm" type="text" name="name" required ' + 'maxlength="120" autocomplete="name" placeholder="Juan Dela Cruz">') + field("cart-ph", "Mobile number", '<input class="order__email" id="cart-ph" type="tel" name="phone" required ' + 'inputmode="tel" autocomplete="tel" pattern="[0-9+ \\-]{7,20}" ' + 'title="A mobile number, like 0917 123 4567" placeholder="0917 123 4567">', "For the courier or the meetup.") + field("cart-ad", "Delivery address", '<textarea class="order__email order__area" id="cart-ad" name="address" required ' + 'maxlength="500" autocomplete="street-address" rows="3" ' + 'placeholder="Street, barangay, city"></textarea>') + "</div>" + '<button class="btn btn--buy order__send" type="submit">Place order</button>' + '<p class="order__fine">Your records are reserved for 24 hours while you pay.</p>' + "</form>";
     document.body.appendChild(box);
     var badge = icon.querySelector("[data-cart-badge]");
     var panel = box.querySelector(".cart__panel");
@@ -130,14 +131,15 @@
     var subEl = box.querySelector("[data-cart-sub]");
     var shipEl = box.querySelector("[data-cart-ship]");
     var adEl = box.querySelector("#cart-ad");
-    var adLabel = box.querySelector('label[for="cart-ad"]');
+    var adField = adEl.closest(".cart__field");
+    var meetEl = box.querySelector(".cart__meet");
     panel.addEventListener("change", function(e) {
         if (!e.target || e.target.name !== "ship") return;
         ship = e.target.value;
         var meet = ship === "meetup";
-        adLabel.textContent = meet ? "Meetup spot and time" : "Delivery address";
-        adEl.placeholder = meet ? "Which mall, and what days and times work for you" : "Street, barangay, city";
-        adEl.setAttribute("autocomplete", meet ? "off" : "street-address");
+        adEl.disabled = meet;
+        adField.hidden = meet;
+        if (meetEl) meetEl.hidden = !meet;
         render();
     });
     function setOpen(open) {
@@ -339,6 +341,7 @@
                 ino: ino,
                 items: itemsOf(),
                 delivery: d ? {
+                    id: d.id,
                     label: d.label,
                     fee: feeText(d),
                     next: d.next
@@ -386,7 +389,7 @@
                 buyer: value("#cart-em"),
                 name: value("#cart-nm"),
                 phone: value("#cart-ph"),
-                address: value("#cart-ad"),
+                address: ship === "meetup" ? "" : value("#cart-ad"),
                 ino: ino,
                 lines: lines,
                 rows: itemsOf(),
