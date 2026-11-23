@@ -41,7 +41,7 @@
 
   <section data-noorder hidden>
     <p class="done__hud">No order to show</p>
-    <p class="done__nonetext">Order pages open in the browser you ordered from, for 48 hours. Your confirmation email has the QR, the exact total and the steps. Can’t find it? Check spam, or <a class="done__mail" href="https://www.facebook.com/inoderecords">message us</a>.</p>
+    <p class="done__nonetext">Order pages open in the browser you ordered from, for 24 hours. Your confirmation email has the QR, the exact total and the steps. Can’t find it? Check spam, or <a class="done__mail" href="https://www.facebook.com/inoderecords">message us</a>.</p>
   </section>
 
   <noscript>
@@ -55,7 +55,7 @@
 <script>
 (function () {
   'use strict';
-  var HOLD = 48 * 3600 * 1000;
+  var HOLD = 24 * 3600 * 1000;
   var o = null;
   try { o = JSON.parse(localStorage.getItem('inode.order') || 'null'); } catch (e) {}
   var until = o ? (Number(o.until) || (Number(o.at) || 0) + HOLD) : 0;

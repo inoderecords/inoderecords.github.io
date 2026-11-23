@@ -28,7 +28,7 @@
                         } ],
                         total: price,
                         at: at,
-                        until: at + 48 * 3600 * 1e3
+                        until: at + 24 * 3600 * 1e3
                     }));
                 } catch (e) {}
             });

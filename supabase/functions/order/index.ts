@@ -14,7 +14,7 @@ const reply = (body: unknown, status = 200) =>
 
 const SITE = 'https://inoderecords.com';
 const QR = `${SITE}/pay/gcash.png`;
-const HOLD_MS = 48 * 3600 * 1000;
+const HOLD_MS = 24 * 3600 * 1000;
 
 type Row = { artist: string; album: string; detail: string; price: string };
 

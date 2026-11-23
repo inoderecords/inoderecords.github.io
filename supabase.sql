@@ -20,7 +20,7 @@ with (security_invoker = off) as
          s.qty - count(c.id) filter (
            where c.status = 'confirmed'
               or (c.status = 'pending'
-                  and c.created_at > now() - interval '48 hours')
+                  and c.created_at > now() - interval '24 hours')
          ) as free
   from shop_shelf s
   left join shop_claims c on c.record = s.id
