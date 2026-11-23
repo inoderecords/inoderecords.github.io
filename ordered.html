@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex">
 <title>INODERECORDS · order placed</title>
 <link rel="icon" href="brand/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="style.css?v=20c706bb">
+<link rel="stylesheet" href="style.css?v=ca499008">
 </head>
 <body>
 
@@ -23,27 +23,30 @@
 
   <section data-order hidden>
     <p class="done__hud">Order placed</p>
-    <p class="done__ino" data-ino><span></span></p>
-    <p class="done__what" data-what></p>
+    <p class="done__ref">Order number <span data-ino></span></p>
+    <ul class="done__items" data-items></ul>
     <p class="done__payhud">Pay exactly</p>
     <p class="done__total" data-total></p>
-    <img class="done__qr" src="pay/gcash.png" alt="GCash QR code for INODERECORDS" width="240" height="240">
-    <p class="done__paynote">GCash · scan with your app<span data-pay></span></p>
+    <p class="done__until">Reserved for you until <span data-until></span>, Philippine time. Unpaid orders go back on sale after that.</p>
+    <img class="done__qr" src="pay/gcash.png" alt="InstaPay QR code for INODERECORDS" width="240" height="240">
+    <p class="done__paynote">InstaPay QR · works with GCash, Maya and bank apps<span data-pay></span></p>
+    <p class="done__phone">On your phone? Screenshot this QR, then upload it from your app’s QR scanner.</p>
     <ol class="done__steps">
-      <li>Your confirmation email repeats everything on this page. Inbox or spam.</li>
-      <li>Reply to it with your payment screenshot. We confirm, then we ship. No email anywhere? Send the screenshot to <a class="done__mail" data-mail href="./">the shop address</a>.</li>
+      <li>Pay exactly <span data-total></span> with the QR.</li>
+      <li>Screenshot the receipt.</li>
+      <li>Reply to your confirmation email with the screenshot. We confirm, then we ship. Can’t find the email? Check spam, or send it to <a class="done__mail" data-mail href="./">the shop address</a>.</li>
     </ol>
-    <p class="done__claim">An order is a claim · the first confirmed payment gets the record</p>
+    <p class="done__ship">The total covers the records. Shipping is extra: Lalamove or LBC, paid by you, unless you asked for a Quezon City meetup.</p>
   </section>
 
   <section data-noorder hidden>
-    <p class="done__hud">No order on this device</p>
-    <p class="done__nonetext">This page shows the payment step for an order placed in this browser, and there is none here. If you ordered, your confirmation email carries everything: the records, the exact total, and the payment steps.</p>
+    <p class="done__hud">No order to show</p>
+    <p class="done__nonetext">Order pages open in the browser you ordered from, for 48 hours. Your confirmation email has the QR, the exact total and the steps. Can’t find it? Check spam, or <a class="done__mail" href="https://www.facebook.com/inoderecords">message us</a>.</p>
   </section>
 
   <noscript>
     <p class="done__hud">Order placed</p>
-    <p class="done__nonetext">Your confirmation email carries everything: the records, the exact total, and the payment steps. Reply to it with your GCash payment screenshot&nbsp;· &#111;&#114;&#100;&#101;&#114;&#115;&#64;&#105;&#110;&#111;&#100;&#101;&#114;&#101;&#99;&#111;&#114;&#100;&#115;&#46;&#99;&#111;&#109;</p>
+    <p class="done__nonetext">Your confirmation email has the QR, the exact total and the steps. Reply to it with your payment screenshot&nbsp;· &#111;&#114;&#100;&#101;&#114;&#115;&#64;&#105;&#110;&#111;&#100;&#101;&#114;&#101;&#99;&#111;&#114;&#100;&#115;&#46;&#99;&#111;&#109;</p>
   </noscript>
 
   <a class="done__back" href="./">&#8592; Back to the records</a>
@@ -52,23 +55,42 @@
 <script>
 (function () {
   'use strict';
+  var HOLD = 48 * 3600 * 1000;
   var o = null;
-  try { o = JSON.parse(sessionStorage.getItem('inode.order') || 'null'); } catch (e) {}
-  var yes = document.querySelector('[data-order]');
-  var no = document.querySelector('[data-noorder]');
-  if (o && o.ino) {
-    yes.hidden = false;
-    document.querySelector('[data-ino]').firstElementChild.textContent = o.ino;
-    if (o.record) document.querySelector('[data-what]').textContent = o.record;
-    var t = document.querySelector('[data-total]');
-    t.textContent = o.price || '';
-    if (!o.price) {
-      t.hidden = true;
-      document.querySelector('.done__payhud').hidden = true;
-    }
-  } else {
-    no.hidden = false;
+  try { o = JSON.parse(localStorage.getItem('inode.order') || 'null'); } catch (e) {}
+  var until = o ? (Number(o.until) || (Number(o.at) || 0) + HOLD) : 0;
+  var live = !!(o && o.ino && until > Date.now());
+  if (o && !live) { try { localStorage.removeItem('inode.order'); } catch (e) {} }
+  if (!live) { document.querySelector('[data-noorder]').hidden = false; return; }
+  document.querySelector('[data-order]').hidden = false;
+  document.querySelector('[data-ino]').textContent = o.ino;
+  var span = function (cls, text) {
+    var s = document.createElement('span');
+    s.className = cls;
+    s.textContent = text;
+    return s;
+  };
+  var items = o.items && o.items.length ? o.items : [];
+  var ul = document.querySelector('[data-items]');
+  for (var i = 0; i < items.length; i++) {
+    var it = items[i];
+    var li = document.createElement('li');
+    var what = document.createElement('div');
+    what.className = 'done__item-what';
+    what.appendChild(span('done__item-artist', it.artist || ''));
+    if (it.album) what.appendChild(span('done__item-album', it.album));
+    if (it.detail) what.appendChild(span('done__item-detail', it.detail));
+    li.appendChild(what);
+    li.appendChild(span('done__item-px', it.price || ''));
+    ul.appendChild(li);
   }
+  var ts = document.querySelectorAll('[data-total]');
+  for (var j = 0; j < ts.length; j++) ts[j].textContent = o.total || '';
+  var when;
+  try {
+    when = new Date(until).toLocaleString('en-US', { timeZone: 'Asia/Manila', weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  } catch (e) { when = new Date(until).toLocaleString(); }
+  document.querySelector('[data-until]').textContent = when;
 })();
 (function () {
   'use strict';

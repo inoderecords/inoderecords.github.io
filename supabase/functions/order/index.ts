@@ -13,6 +13,10 @@ const reply = (body: unknown, status = 200) =>
   });
 
 const SITE = 'https://inoderecords.com';
+const QR = `${SITE}/pay/gcash.png`;
+const HOLD_MS = 48 * 3600 * 1000;
+
+type Row = { artist: string; album: string; detail: string; price: string };
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS });
@@ -23,8 +27,10 @@ Deno.serve(async (req) => {
     buyer?: string;
     ino?: string;
     lines?: string[];
+    rows?: { artist?: string; album?: string; detail?: string; price?: string }[];
     total?: string;
     name?: string;
+    phone?: string;
     address?: string;
   };
   try {
@@ -42,7 +48,14 @@ Deno.serve(async (req) => {
   const lines = (input.lines ?? []).map((l) => String(l)).slice(0, 20);
   const total = String(input.total ?? '');
   const name = String(input.name ?? '').trim();
+  const phone = String(input.phone ?? '').trim();
   const address = String(input.address ?? '').trim();
+  const given: Row[] = (Array.isArray(input.rows) ? input.rows : []).slice(0, 20).map((r) => ({
+    artist: String(r?.artist ?? '').slice(0, 200),
+    album: String(r?.album ?? '').slice(0, 200),
+    detail: String(r?.detail ?? '').slice(0, 200),
+    price: String(r?.price ?? '').slice(0, 40),
+  }));
 
   if (
     !items.length || items.length > 20 ||
@@ -50,7 +63,8 @@ Deno.serve(async (req) => {
     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyer) || buyer.length > 254 ||
     !/^ino 0x[0-9A-F]{1,12}$/.test(ino) ||
     lines.some((l) => l.length > 300) || total.length > 40 ||
-    !name || name.length > 120 || !address || address.length > 500
+    !name || name.length > 120 || !address || address.length > 500 ||
+    (phone !== '' && !/^[0-9+().\s-]{7,20}$/.test(phone))
   ) {
     return reply({ ok: false, why: 'bad cart' }, 400);
   }
@@ -63,32 +77,48 @@ Deno.serve(async (req) => {
   if (error) return reply({ ok: false, why: 'shelf error' }, 500);
   if (data && data.ok === false) return reply(data);
 
-  const what = lines.length ? lines.join('\n') : items.map((i) => `${i.record} x${i.n}`).join('\n');
-  const buyerText = `This confirms your order.
+  const until = new Date(Date.now() + HOLD_MS);
+  const when = until.toLocaleString('en-US', {
+    timeZone: 'Asia/Manila',
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
 
-${ino}
+  const rows: Row[] = given.length
+    ? given
+    : (lines.length ? lines : items.map((i) => `${i.record} x${i.n}`))
+      .map((l) => ({ artist: l, album: '', detail: '', price: '' }));
+  const what = rows.map((r) => [r.artist, r.album, r.detail, r.price].filter(Boolean).join(' · ')).join('\n');
+  const shipTo = [name, phone, address].filter(Boolean).join('\n');
+
+  const buyerText = `Order placed. Order number: ${ino}
+
 ${what}
-Total ${total}
+
+Pay exactly ${total}.
+Reserved for you until ${when}, Philippine time. Unpaid orders go back on sale after that.
+
+01  Scan the QR with GCash, Maya or any bank app and pay exactly ${total}. The QR is attached to this email.
+02  Screenshot the receipt.
+03  Reply to this email with the screenshot. We confirm, then we ship.
+
+${total} covers the records. Shipping is extra: Lalamove or LBC, paid by you, unless you asked for a Quezon City meetup.
 
 Ship to
-${name}
-${address}
+${shipTo}
 
-An order is a claim and the first confirmed payment gets the record.
-
-01  Pay the exact amount via GCash. The steps and the QR: ${SITE}/ordered.html
-02  Reply to this email with your payment screenshot. That is all; we
-    confirm and ship. Shipping is Lalamove or LBC, shouldered by the
-    buyer, unless you asked for a Quezon City meetup.
-
-INODERECORDS - Quezon City
+INODERECORDS · Quezon City
 ${SITE}`;
 
   const shopText = `${ino}
 ${what}
 Total ${total}
+Reserved until ${when}
 
-Buyer: ${name} <${buyer}>
+Buyer: ${name} <${buyer}>${phone ? `\nMobile: ${phone}` : ''}
 Ship to: ${address}
 
 Confirm the claim in the Supabase dashboard once the payment lands.`;
@@ -96,16 +126,27 @@ Confirm the claim in the Supabase dashboard once the payment lands.`;
   const esc = (s: string) =>
     s.replace(/[&<>"']/g, (c) =>
       ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
+  const br = (s: string) => esc(s).replace(/\n/g, '<br>');
   const INK = '#0a0a0a';
   const PAPER = '#f4f3ef';
   const BLUE = '#2400ff';
   const DIMC = '#8b8a82';
   const HAIR = '#2c2c2a';
   const MONO = "'Courier New',Courier,monospace";
-  const rowsOf = (ls: string[]) =>
-    ls.map((l) =>
-      `<tr><td style="border-top:1px solid ${HAIR};padding:9px 2px;color:${PAPER};font-family:${MONO};font-size:13px;">${esc(l)}</td></tr>`
-    ).join('');
+  const label = (t: string, top = 22) =>
+    `<tr><td style="padding:${top}px 2px 6px;color:${DIMC};font-family:${MONO};font-size:10px;font-weight:bold;letter-spacing:2px;">${t}</td></tr>`;
+  const text = (html: string, size = 13, color = PAPER, bottom = 4) =>
+    `<tr><td style="padding:0 2px ${bottom}px;color:${color};font-family:${MONO};font-size:${size}px;line-height:1.6;">${html}</td></tr>`;
+  const itemTable = (rs: Row[]) =>
+    `<tr><td style="padding:6px 0 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">` +
+    rs.map((r) =>
+      `<tr><td valign="top" style="border-top:1px solid ${HAIR};padding:11px 2px;font-family:${MONO};">` +
+      `<div style="color:${PAPER};font-size:13px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;">${esc(r.artist)}</div>` +
+      (r.album ? `<div style="color:${PAPER};font-size:13px;padding-top:2px;">${esc(r.album)}</div>` : '') +
+      (r.detail ? `<div style="color:${DIMC};font-size:11px;padding-top:3px;">${esc(r.detail)}</div>` : '') +
+      `</td><td valign="top" align="right" style="border-top:1px solid ${HAIR};padding:11px 2px;font-family:${MONO};color:${PAPER};font-size:13px;font-weight:bold;white-space:nowrap;">${esc(r.price)}</td></tr>`
+    ).join('') +
+    `</table></td></tr>`;
   const step = (n: string, body: string) =>
     `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 12px;"><tr>` +
     `<td bgcolor="${BLUE}" width="30" style="background:${BLUE};color:${PAPER};font-family:${MONO};font-size:11px;font-weight:bold;text-align:center;padding:5px 0;" valign="top">${n}</td>` +
@@ -119,55 +160,73 @@ Confirm the claim in the Supabase dashboard once the payment lands.`;
     `<tr><td style="padding:0 0 16px;color:${PAPER};font-family:${MONO};font-size:14px;font-weight:bold;letter-spacing:3px;">IN&#9673;DERECORDS</td></tr>` +
     `<tr><td bgcolor="${PAPER}" style="background:${PAPER};color:${INK};padding:10px 14px;font-family:${MONO};font-size:11px;font-weight:bold;letter-spacing:3px;">${band}</td></tr>` +
     inner +
-    `<tr><td style="padding:28px 0 0;color:${DIMC};font-family:${MONO};font-size:10px;letter-spacing:2px;">INODERECORDS &#183; QUEZON CITY &#183; <a href="${SITE}" style="color:${DIMC};">INODERECORDS.COM</a></td></tr>` +
+    `<tr><td style="padding:30px 0 0;color:${DIMC};font-family:${MONO};font-size:10px;letter-spacing:2px;">INODERECORDS &#183; QUEZON CITY &#183; <a href="${SITE}" style="color:${DIMC};">INODERECORDS.COM</a></td></tr>` +
     `</table></td></tr></table></body></html>`;
+
   const buyerHtml = skin(
-    `Pay exactly ${total}, then reply with your GCash screenshot.`,
+    `Pay exactly ${total} by ${when}. The QR and steps are inside.`,
     'ORDER PLACED',
-    `<tr><td style="padding:18px 2px 2px;color:${PAPER};font-family:${MONO};font-size:20px;font-weight:bold;letter-spacing:1px;">${esc(ino)}</td></tr>` +
-    `<tr><td style="padding:0 2px 16px;color:${DIMC};font-family:${MONO};font-size:10px;letter-spacing:2px;">AN ORDER IS A CLAIM &#183; FIRST CONFIRMED PAYMENT GETS THE RECORD</td></tr>` +
-    rowsOf(lines.length ? lines : items.map((i) => `${i.record} x${i.n}`)) +
-    `<tr><td style="border-top:1px solid ${PAPER};padding:12px 2px 2px;color:${DIMC};font-family:${MONO};font-size:10px;font-weight:bold;letter-spacing:2px;">PAY EXACTLY</td></tr>` +
-    `<tr><td style="padding:0 2px 18px;color:${PAPER};font-family:${MONO};font-size:34px;font-weight:bold;">${esc(total)}</td></tr>` +
-    `<tr><td style="padding:0 0 18px;">` +
-    step('01', `Pay the exact amount via GCash. The QR is on your order page: <a href="${SITE}/ordered.html" style="color:${PAPER};">inoderecords.com/ordered.html</a>`) +
-    step('02', `Reply to this email with your payment screenshot. That is all; we confirm and ship. Shipping is Lalamove or LBC, shouldered by the buyer, unless you asked for a Quezon City meetup.`) +
+    label('ORDER NUMBER', 20) +
+    text(esc(ino), 16, PAPER, 0) +
+    itemTable(rows) +
+    label('PAY EXACTLY', 18) +
+    `<tr><td style="padding:0 2px 8px;color:${PAPER};font-family:${MONO};font-size:34px;font-weight:bold;">${esc(total)}</td></tr>` +
+    text(`Reserved for you until <b>${esc(when)}</b>, Philippine time. Unpaid orders go back on sale after that.`, 13, PAPER, 18) +
+    `<tr><td style="padding:0 0 10px;"><table role="presentation" cellpadding="0" cellspacing="0"><tr>` +
+    `<td bgcolor="#ffffff" style="background:#ffffff;padding:14px;"><img src="${QR}" width="200" height="200" alt="InstaPay QR for INODERECORDS" style="display:block;width:200px;height:200px;border:0;"></td>` +
+    `</tr></table></td></tr>` +
+    text('InstaPay QR &#183; works with GCash, Maya and bank apps.<br>On your phone? The QR is attached too. Save it, then upload it in your app&#8217;s QR scanner.', 11, DIMC, 22) +
+    `<tr><td style="padding:0;">` +
+    step('01', `Scan the QR and pay exactly <b>${esc(total)}</b>.`) +
+    step('02', 'Screenshot the receipt.') +
+    step('03', 'Reply to this email with the screenshot. We confirm, then we ship.') +
     `</td></tr>` +
-    `<tr><td style="border-top:1px solid ${HAIR};padding:12px 2px 2px;color:${DIMC};font-family:${MONO};font-size:10px;font-weight:bold;letter-spacing:2px;">SHIP TO</td></tr>` +
-    `<tr><td style="padding:0 2px 6px;color:${PAPER};font-family:${MONO};font-size:13px;line-height:1.6;">${esc(name)}<br>${esc(address).replace(/\n/g, '<br>')}</td></tr>`
+    text(`${esc(total)} covers the records. Shipping is extra: Lalamove or LBC, paid by you, unless you asked for a Quezon City meetup.`, 12, DIMC, 0) +
+    label('SHIP TO', 24) +
+    text(br(shipTo), 13, PAPER, 0)
   );
+
   const shopHtml = skin(
     `${name} ordered. ${total}.`,
     `ORDER &#183; ${esc(total)}`,
-    `<tr><td style="padding:18px 2px 10px;color:${PAPER};font-family:${MONO};font-size:20px;font-weight:bold;letter-spacing:1px;">${esc(ino)}</td></tr>` +
-    rowsOf(lines.length ? lines : items.map((i) => `${i.record} x${i.n}`)) +
-    `<tr><td style="border-top:1px solid ${PAPER};padding:12px 2px 18px;color:${PAPER};font-family:${MONO};font-size:15px;font-weight:bold;">TOTAL ${esc(total)}</td></tr>` +
-    `<tr><td style="border-top:1px solid ${HAIR};padding:12px 2px 2px;color:${DIMC};font-family:${MONO};font-size:10px;font-weight:bold;letter-spacing:2px;">BUYER</td></tr>` +
-    `<tr><td style="padding:0 2px 12px;color:${PAPER};font-family:${MONO};font-size:13px;line-height:1.6;">${esc(name)} &lt;${esc(buyer)}&gt;</td></tr>` +
-    `<tr><td style="border-top:1px solid ${HAIR};padding:12px 2px 2px;color:${DIMC};font-family:${MONO};font-size:10px;font-weight:bold;letter-spacing:2px;">SHIP TO</td></tr>` +
-    `<tr><td style="padding:0 2px 16px;color:${PAPER};font-family:${MONO};font-size:13px;line-height:1.6;">${esc(address).replace(/\n/g, '<br>')}</td></tr>` +
-    `<tr><td style="padding:0 2px 6px;color:${DIMC};font-family:${MONO};font-size:12px;line-height:1.6;">Confirm the claim in the Supabase dashboard once the payment lands.</td></tr>`
+    label('ORDER NUMBER', 20) +
+    text(esc(ino), 16, PAPER, 0) +
+    itemTable(rows) +
+    `<tr><td style="border-top:1px solid ${PAPER};padding:12px 2px 4px;color:${PAPER};font-family:${MONO};font-size:15px;font-weight:bold;">TOTAL ${esc(total)}</td></tr>` +
+    text(`Reserved until ${esc(when)}. Unpaid, it goes back on sale after that.`, 12, DIMC, 0) +
+    label('BUYER', 24) +
+    text(`${esc(name)} &lt;${esc(buyer)}&gt;${phone ? `<br>${esc(phone)}` : ''}`, 13, PAPER, 0) +
+    label('SHIP TO', 18) +
+    text(br(address), 13, PAPER, 18) +
+    text('Confirm the claim in the Supabase dashboard once the payment lands.', 12, DIMC, 0)
   );
 
   const user = Deno.env.get('SMTP_USER') ?? '';
   const key = Deno.env.get('RESEND_KEY') ?? '';
   let mailed = false;
   try {
-    const send = async (msg: Record<string, unknown>) => {
-      const r = await fetch('https://api.resend.com/emails', {
+    const post = (msg: Record<string, unknown>) =>
+      fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(msg),
         signal: AbortSignal.timeout(15000),
       });
+    const send = async (msg: Record<string, unknown>) => {
+      let r = await post(msg);
+      if (!r.ok && msg.attachments) {
+        const { attachments: _drop, ...bare } = msg;
+        r = await post(bare);
+      }
       if (!r.ok) throw new Error(`resend ${r.status}`);
     };
     await send({
       from: `INODERECORDS <${user}>`,
       to: [buyer],
-      subject: `Order placed · ${ino} · INODERECORDS`,
+      subject: `Pay ${total} to complete your order · ${ino}`,
       text: buyerText,
       html: buyerHtml,
+      attachments: [{ filename: 'inoderecords-qr.png', path: QR }],
     });
     await send({
       from: `INODERECORDS <${user}>`,
@@ -182,5 +241,5 @@ Confirm the claim in the Supabase dashboard once the payment lands.`;
     mailed = false;
   }
 
-  return reply({ ok: true, mailed });
+  return reply({ ok: true, mailed, until: until.toISOString() });
 });

@@ -11,15 +11,24 @@
                 var sub = f.querySelector('[name="_subject"]');
                 if (num) num.value = ino;
                 if (sub) sub.value += " · " + ino;
+                var price = (f.querySelector('[name="price"]') || {
+                    value: ""
+                }).value;
+                var at = Date.now();
                 try {
-                    sessionStorage.setItem("inode.order", JSON.stringify({
+                    localStorage.setItem("inode.order", JSON.stringify({
                         ino: ino,
-                        record: (f.querySelector('[name="record"]') || {
-                            value: ""
-                        }).value,
-                        price: (f.querySelector('[name="price"]') || {
-                            value: ""
-                        }).value
+                        items: [ {
+                            artist: (f.querySelector('[name="record"]') || {
+                                value: ""
+                            }).value,
+                            album: "",
+                            detail: "",
+                            price: price
+                        } ],
+                        total: price,
+                        at: at,
+                        until: at + 48 * 3600 * 1e3
                     }));
                 } catch (e) {}
             });
