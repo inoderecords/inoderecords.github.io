@@ -108,14 +108,28 @@ const titleOf = r => `${r.artist} · ${r.album}` + (r.variant && r.variant !== r
 
 const detailOf = r => r.format + (r.variant && r.variant !== r.format ? ` · ${r.variant}` : "");
 
+const feeText = d => d.fee === 0 ? "Free" : d.fee === null ? "Paid by you" : peso(d.fee);
+
+function checkDelivery(list) {
+    if (!Array.isArray(list) || !list.length) throw new Error("stock.json: delivery options missing");
+    const seen = new Set;
+    for (const d of list) {
+        if (!/^[a-z0-9-]{1,20}$/.test(d.id || "") || seen.has(d.id)) throw new Error(`delivery: bad or repeated id "${d.id}"`);
+        seen.add(d.id);
+        if (!d.label || !d.next) throw new Error(`delivery ${d.id}: needs "label" and "next"`);
+        if (!(d.fee === null || Number.isInteger(d.fee) && d.fee >= 0)) throw new Error(`delivery ${d.id}: fee must be a whole number or null`);
+    }
+}
+
 function buyBlock(r, contact) {
     const amt = `<span class="rec__amt">${peso(r.price)}</span>` + (r.qty > 1 ? '<span class="rec__each">each</span>' : "");
     if (!ORDER.endpoint) {
         return `<p class="rec__buy">\n              ${amt}\n              <a class="btn btn--buy" href="${esc(contact.page)}"\n                 aria-label="Message to buy ${esc(r.artist)}, ${esc(r.album)}">MESSAGE TO BUY</a>\n            </p>`;
     }
     const title = titleOf(r);
-    const reply = `We received your order: ${title}, ${peso(r.price)}. ` + "Your record is reserved for 24 hours while you pay. " + `To pay, open ${ORDER.site}/ordered.html in the browser you ordered from ` + "and scan the QR with GCash, Maya or any bank app. " + "Then send your payment screenshot to the shop email shown on that page. " + "Shipping is extra: Lalamove or LBC, paid by you, unless you asked for a Quezon City meetup. INODERECORDS · Quezon City";
-    return `<div class="rec__buy">\n              ${amt}\n              <details class="order">\n                <summary class="btn btn--buy"\n                         aria-label="Buy ${esc(r.artist)}, ${esc(r.album)}">BUY</summary>\n                <form class="order__form" method="POST"\n                      action="https://formsubmit.co/${esc(ORDER.endpoint)}">\n                  <input type="hidden" name="_subject" value="Order · ${esc(title)} · ${peso(r.price)}">\n                  <input type="hidden" name="_template" value="table">\n                  <input type="hidden" name="_next" value="${esc(ORDER.site)}/ordered.html">\n                  <input type="hidden" name="_autoresponse" value="${esc(reply)}">\n                  <input type="text" name="_honey" class="order__hp" tabindex="-1" autocomplete="off">\n                  <input type="hidden" name="record" value="${esc(title)}">\n                  <input type="hidden" name="price" value="${peso(r.price)}">\n                  <input type="hidden" name="order" value="">\n                  <label class="order__label" for="em-${esc(r.id)}">Email</label>\n                  <input class="order__email" id="em-${esc(r.id)}" type="email" name="email"\n                         required maxlength="254" autocomplete="email" placeholder="you@gmail.com">\n                  <label class="order__label" for="nm-${esc(r.id)}">Name</label>\n                  <input class="order__email" id="nm-${esc(r.id)}" type="text" name="name"\n                         required maxlength="120" autocomplete="name" placeholder="Juan Dela Cruz">\n                  <label class="order__label" for="ph-${esc(r.id)}">Mobile number</label>\n                  <input class="order__email" id="ph-${esc(r.id)}" type="tel" name="phone"\n                         required inputmode="tel" autocomplete="tel" placeholder="0917 123 4567">\n                  <label class="order__label" for="ad-${esc(r.id)}">Delivery address</label>\n                  <textarea class="order__email order__area" id="ad-${esc(r.id)}" name="address"\n                            required maxlength="500" autocomplete="street-address" rows="3"\n                            placeholder="Street, barangay, city. Or write QC meetup"></textarea>\n                  <p class="order__fine">Plus shipping: Lalamove or LBC, paid by you.</p>\n                  <button class="btn btn--buy order__send" type="submit">Place order</button>\n                  <p class="order__fine">Your record is reserved for 24 hours while you pay.</p>\n                </form>\n              </details>\n            </div>`;
+    const reply = `We received your order: ${title}, ${peso(r.price)}. ` + "Your record is reserved for 24 hours while you pay. " + `To pay, open ${ORDER.site}/ordered.html in the browser you ordered from ` + "and scan the QR with GCash, Maya or any bank app. " + "Then send your payment screenshot to the shop email shown on that page. " + "Your total is the record plus the delivery fee you chose. We email you the delivery details. INODERECORDS · Quezon City";
+    const options = stock.delivery.map(d => `<option>${esc(d.label)} · ${esc(feeText(d))}</option>`).join("");
+    return `<div class="rec__buy">\n              ${amt}\n              <details class="order">\n                <summary class="btn btn--buy"\n                         aria-label="Buy ${esc(r.artist)}, ${esc(r.album)}">BUY</summary>\n                <form class="order__form" method="POST"\n                      action="https://formsubmit.co/${esc(ORDER.endpoint)}">\n                  <input type="hidden" name="_subject" value="Order · ${esc(title)} · ${peso(r.price)}">\n                  <input type="hidden" name="_template" value="table">\n                  <input type="hidden" name="_next" value="${esc(ORDER.site)}/ordered.html">\n                  <input type="hidden" name="_autoresponse" value="${esc(reply)}">\n                  <input type="text" name="_honey" class="order__hp" tabindex="-1" autocomplete="off">\n                  <input type="hidden" name="record" value="${esc(title)}">\n                  <input type="hidden" name="price" value="${peso(r.price)}">\n                  <input type="hidden" name="order" value="">\n                  <label class="order__label" for="em-${esc(r.id)}">Email</label>\n                  <input class="order__email" id="em-${esc(r.id)}" type="email" name="email"\n                         required maxlength="254" autocomplete="email" placeholder="you@gmail.com">\n                  <label class="order__label" for="nm-${esc(r.id)}">Name</label>\n                  <input class="order__email" id="nm-${esc(r.id)}" type="text" name="name"\n                         required maxlength="120" autocomplete="name" placeholder="Juan Dela Cruz">\n                  <label class="order__label" for="ph-${esc(r.id)}">Mobile number</label>\n                  <input class="order__email" id="ph-${esc(r.id)}" type="tel" name="phone"\n                         required inputmode="tel" autocomplete="tel" placeholder="0917 123 4567">\n                  <label class="order__label" for="dl-${esc(r.id)}">Delivery</label>\n                  <select class="order__email" id="dl-${esc(r.id)}" name="delivery" required><option value="">Choose one</option>${options}</select>\n                  <label class="order__label" for="ad-${esc(r.id)}">Address or meetup spot</label>\n                  <textarea class="order__email order__area" id="ad-${esc(r.id)}" name="address"\n                            required maxlength="500" autocomplete="street-address" rows="3"\n                            placeholder="Street, barangay, city"></textarea>\n                  <button class="btn btn--buy order__send" type="submit">Place order</button>\n                  <p class="order__fine">Your record is reserved for 24 hours while you pay.</p>\n                </form>\n              </details>\n            </div>`;
 }
 
 function card(r, contact, i, all, art, disc) {
@@ -129,13 +143,21 @@ function card(r, contact, i, all, art, disc) {
 function page(stock, art, disc, v) {
     const {contact: contact, records: records} = stock;
     records.forEach(checkRecord);
+    checkDelivery(stock.delivery);
+    const deliveryJson = JSON.stringify(stock.delivery.map(d => ({
+        id: d.id,
+        label: d.label,
+        fee: d.fee,
+        note: d.note || "",
+        next: d.next
+    }))).replace(/</g, "\\u003c");
     const n = records.reduce((a, r) => a + r.qty, 0);
     const artists = records.map(r => r.artist).filter((v, i, a) => a.indexOf(v) === i);
     const desc = `${n} brand new sealed records, in the Philippines now, shipping from Quezon City. ${artists.join(", ")}.`;
     const how = ORDER.endpoint ? [ "Order with your email", "Pay via GCash", "Reply with the screenshot, we ship" ] : [ "Message us on Facebook", "We send real photos of the actual copy", "Pay and we ship" ];
     const twice = r => records.filter(o => o.artist === r.artist).length > 1;
     const dots = records.map((r, i) => `          <li><button type="button" data-go="${i}"` + ` aria-label="${esc(r.artist)}, ${esc(r.album)}, ${esc(r.format)}, ${peso(r.price)}">` + `<i aria-hidden="true"></i>` + `<span class="crate__ix">${two(i + 1)}</span>` + `<span class="crate__who">${esc(r.artist)}${twice(r) ? ` · ${esc(r.format)}` : ""}</span>` + `<span class="crate__lead"></span>` + `<span class="crate__px">${peso(r.price)}</span>` + `</button></li>`).join("\n");
-    return `<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n<meta name="theme-color" content="#0a0a0a">\n<title>INODERECORDS · records in stock, Quezon City</title>\n<meta name="description" content="${esc(desc)}">\n\n<meta property="og:type" content="website">\n<meta property="og:title" content="INODERECORDS · ${n} sealed records in stock">\n<meta property="og:description" content="${esc(desc)}">\n<meta property="og:image" content="brand/og.png">\n<meta name="twitter:card" content="summary_large_image">\n\n<link rel="icon" href="brand/favicon.svg" type="image/svg+xml">\n<link rel="stylesheet" href="${v.css}">\n</head>\n<body${ORDER.claim.url ? ` data-claim-url="${esc(ORDER.claim.url)}" data-claim-key="${esc(ORDER.claim.key)}"` : ""}>\n\n<div class="scan" aria-hidden="true"></div>\n<div class="frame" aria-hidden="true"><i></i><i></i><i></i><i></i></div>\n\n<header class="bar">\n  <h1 class="bar__name" aria-label="INODERECORDS">${wordmark}</h1>\n  <a class="bar__cta" href="${esc(contact.page)}">Message us</a>\n</header>\n\n<main class="shop">\n\n  \n  <section class="crate" data-crate aria-roledescription="record crate">\n\n    <div class="crate__stage">\n      <canvas class="crate__canvas" aria-hidden="true"></canvas>\n    </div>\n\n    <div class="crate__deck">\n      \n      <p class="crate__prov" aria-hidden="true"><span data-prov-a></span><span data-prov-b></span></p>\n\n      <ol class="crate__list">\n${records.map((r, i) => card(r, contact, i, records, art, disc)).join("\n")}\n      </ol>\n\n      \n      <nav class="crate__nav" aria-label="Records">\n        <button class="crate__arrow" type="button" data-step="-1">\n          <span aria-hidden="true">&#8592;</span><span class="sr">Previous record</span>\n        </button>\n        <ol class="crate__dots">\n${dots}\n        </ol>\n        <p class="crate__pos" aria-hidden="true"><span data-pos>01</span> / ${two(records.length)}</p>\n        <button class="crate__arrow" type="button" data-step="1">\n          <span aria-hidden="true">&#8594;</span><span class="sr">Next record</span>\n        </button>\n      </nav>\n    </div>\n\n  </section>\n\n</main>\n\n\n<footer class="foot">\n  <p class="foot__how">\n${how.map(s => `    <span>${esc(s)}</span>`).join("\n")}\n  </p>\n  <p class="foot__line">\n    <span>${esc(contact.shipping)}</span>\n    <span>${esc(contact.meetup)}</span>\n    <span data-facts>${records.length} titles · ${n} copies · all sealed</span>\n    <span>Disc photos show the pressing, not your exact copy.</span>\n    <span>Cover art via Cover Art Archive.</span>\n  </p>\n</footer>\n\n<script src="${v.boot}" defer><\/script>\n<script src="${v.crate}" defer><\/script>\n${ORDER.endpoint ? `<script src="${v.order}" defer><\/script>\n<script src="${v.cart}" defer><\/script>\n` : ""}</body>\n</html>\n`;
+    return `<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n<meta name="theme-color" content="#0a0a0a">\n<title>INODERECORDS · records in stock, Quezon City</title>\n<meta name="description" content="${esc(desc)}">\n\n<meta property="og:type" content="website">\n<meta property="og:title" content="INODERECORDS · ${n} sealed records in stock">\n<meta property="og:description" content="${esc(desc)}">\n<meta property="og:image" content="brand/og.png">\n<meta name="twitter:card" content="summary_large_image">\n\n<link rel="icon" href="brand/favicon.svg" type="image/svg+xml">\n<link rel="stylesheet" href="${v.css}">\n</head>\n<body${ORDER.claim.url ? ` data-claim-url="${esc(ORDER.claim.url)}" data-claim-key="${esc(ORDER.claim.key)}"` : ""}>\n\n<div class="scan" aria-hidden="true"></div>\n<div class="frame" aria-hidden="true"><i></i><i></i><i></i><i></i></div>\n\n<header class="bar">\n  <h1 class="bar__name" aria-label="INODERECORDS">${wordmark}</h1>\n  <a class="bar__cta" href="${esc(contact.page)}">Message us</a>\n</header>\n\n<main class="shop">\n\n  \n  <section class="crate" data-crate aria-roledescription="record crate">\n\n    <div class="crate__stage">\n      <canvas class="crate__canvas" aria-hidden="true"></canvas>\n    </div>\n\n    <div class="crate__deck">\n      \n      <p class="crate__prov" aria-hidden="true"><span data-prov-a></span><span data-prov-b></span></p>\n\n      <ol class="crate__list">\n${records.map((r, i) => card(r, contact, i, records, art, disc)).join("\n")}\n      </ol>\n\n      \n      <nav class="crate__nav" aria-label="Records">\n        <button class="crate__arrow" type="button" data-step="-1">\n          <span aria-hidden="true">&#8592;</span><span class="sr">Previous record</span>\n        </button>\n        <ol class="crate__dots">\n${dots}\n        </ol>\n        <p class="crate__pos" aria-hidden="true"><span data-pos>01</span> / ${two(records.length)}</p>\n        <button class="crate__arrow" type="button" data-step="1">\n          <span aria-hidden="true">&#8594;</span><span class="sr">Next record</span>\n        </button>\n      </nav>\n    </div>\n\n  </section>\n\n</main>\n\n\n<footer class="foot">\n  <p class="foot__how">\n${how.map(s => `    <span>${esc(s)}</span>`).join("\n")}\n  </p>\n  <p class="foot__line">\n    <span>${esc(contact.shipping)}</span>\n    <span>${esc(contact.meetup)}</span>\n    <span data-facts>${records.length} titles · ${n} copies · all sealed</span>\n    <span>Disc photos show the pressing, not your exact copy.</span>\n    <span>Cover art via Cover Art Archive.</span>\n  </p>\n</footer>\n\n<script src="${v.boot}" defer><\/script>\n<script src="${v.crate}" defer><\/script>\n${ORDER.endpoint ? `<script type="application/json" id="delivery">${deliveryJson}<\/script>\n<script src="${v.order}" defer><\/script>\n<script src="${v.cart}" defer><\/script>\n` : ""}</body>\n</html>\n`;
 }
 
 function thanksPage(contact, v, hasQr) {
@@ -178,9 +200,9 @@ ${hasQr ? `    <img class="done__qr" src="pay/gcash.png" alt="InstaPay QR code f
 `}    <ol class="done__steps">
       <li>Pay exactly <span data-total></span> with the QR.</li>
       <li>Screenshot the receipt.</li>
-      <li>Reply to your confirmation email with the screenshot. We confirm, then we ship. Can’t find the email? Check spam, or send it to <a class="done__mail" data-mail href="./">the shop address</a>.</li>
+      <li>Reply to your confirmation email with the screenshot. We confirm by email. Can’t find the email? Check spam, or send it to <a class="done__mail" data-mail href="./">the shop address</a>.</li>
     </ol>
-    <p class="done__ship">The total covers the records. Shipping is extra: Lalamove or LBC, paid by you, unless you asked for a Quezon City meetup.</p>
+    <p class="done__ship" data-next>We’ll email you the delivery details.</p>
   </section>
 
   <section data-noorder hidden>
@@ -227,6 +249,19 @@ ${hasQr ? `    <img class="done__qr" src="pay/gcash.png" alt="InstaPay QR code f
     li.appendChild(what);
     li.appendChild(span('done__item-px', it.price || ''));
     ul.appendChild(li);
+  }
+  var dv = o.delivery;
+  if (dv && dv.label) {
+    var dl = document.createElement('li');
+    dl.className = 'done__item--ship';
+    var dw = document.createElement('div');
+    dw.className = 'done__item-what';
+    dw.appendChild(span('done__item-detail', 'Delivery'));
+    dw.appendChild(span('done__item-album', dv.label));
+    dl.appendChild(dw);
+    dl.appendChild(span('done__item-px', dv.fee || ''));
+    ul.appendChild(dl);
+    if (dv.next) document.querySelector('[data-next]').textContent = dv.next;
   }
   var ts = document.querySelectorAll('[data-total]');
   for (var j = 0; j < ts.length; j++) ts[j].textContent = o.total || '';

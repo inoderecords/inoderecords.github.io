@@ -32,6 +32,7 @@ Deno.serve(async (req) => {
     name?: string;
     phone?: string;
     address?: string;
+    delivery?: { id?: string; label?: string; fee?: number | null; next?: string } | null;
   };
   try {
     input = await req.json();
@@ -56,8 +57,18 @@ Deno.serve(async (req) => {
     detail: String(r?.detail ?? '').slice(0, 200),
     price: String(r?.price ?? '').slice(0, 40),
   }));
+  const dIn = input.delivery && typeof input.delivery === 'object' ? input.delivery : null;
+  const delivery = dIn
+    ? {
+      id: String(dIn.id ?? ''),
+      label: String(dIn.label ?? '').slice(0, 80),
+      fee: typeof dIn.fee === 'number' && Number.isFinite(dIn.fee) && dIn.fee >= 0 ? Math.round(dIn.fee) : null,
+      next: String(dIn.next ?? '').slice(0, 300),
+    }
+    : null;
 
   if (
+    (delivery && (!/^[a-z0-9-]{1,20}$/.test(delivery.id) || !delivery.label)) ||
     !items.length || items.length > 20 ||
     items.some((i) => !/^[a-z0-9-]{1,40}$/.test(i.record) || !(i.n >= 1 && i.n <= 10)) ||
     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyer) || buyer.length > 254 ||
@@ -93,33 +104,39 @@ Deno.serve(async (req) => {
       .map((l) => ({ artist: l, album: '', detail: '', price: '' }));
   const what = rows.map((r) => [r.artist, r.album, r.detail, r.price].filter(Boolean).join(' · ')).join('\n');
   const shipTo = [name, phone, address].filter(Boolean).join('\n');
+  const feeOf = (fee: number | null) =>
+    fee === 0 ? 'Free' : fee === null ? 'Paid by you' : `₱${fee.toLocaleString('en-US')}`;
+  const meet = delivery?.id === 'meetup';
+  const dLine = delivery ? `Delivery: ${delivery.label} · ${feeOf(delivery.fee)}` : '';
+  const next = delivery?.next || 'We’ll email you the delivery details.';
+  const placeLabel = meet ? 'Meetup' : 'Ship to';
 
   const buyerText = `Order placed. Order number: ${ino}
 
-${what}
+${what}${dLine ? `\n${dLine}` : ''}
 
 Pay exactly ${total}.
 Reserved for you until ${when}, Philippine time. Unpaid orders go back on sale after that.
 
 01  Scan the QR with GCash, Maya or any bank app and pay exactly ${total}. The QR is attached to this email.
 02  Screenshot the receipt.
-03  Reply to this email with the screenshot. We confirm, then we ship.
+03  Reply to this email with the screenshot. We confirm, then we ${meet ? 'set the meetup' : 'ship'}.
 
-${total} covers the records. Shipping is extra: Lalamove or LBC, paid by you, unless you asked for a Quezon City meetup.
+${next}
 
-Ship to
+${placeLabel}
 ${shipTo}
 
 INODERECORDS · Quezon City
 ${SITE}`;
 
   const shopText = `${ino}
-${what}
+${what}${dLine ? `\n${dLine}` : ''}
 Total ${total}
 Reserved until ${when}
 
 Buyer: ${name} <${buyer}>${phone ? `\nMobile: ${phone}` : ''}
-Ship to: ${address}
+${placeLabel}: ${address}
 
 Confirm the claim in the Supabase dashboard once the payment lands.`;
 
@@ -146,6 +163,12 @@ Confirm the claim in the Supabase dashboard once the payment lands.`;
       (r.detail ? `<div style="color:${DIMC};font-size:11px;padding-top:3px;">${esc(r.detail)}</div>` : '') +
       `</td><td valign="top" align="right" style="border-top:1px solid ${HAIR};padding:11px 2px;font-family:${MONO};color:${PAPER};font-size:13px;font-weight:bold;white-space:nowrap;">${esc(r.price)}</td></tr>`
     ).join('') +
+    (delivery
+      ? `<tr><td valign="top" style="border-top:1px solid ${HAIR};padding:11px 2px;font-family:${MONO};">` +
+        `<div style="color:${DIMC};font-size:10px;font-weight:bold;letter-spacing:2px;">DELIVERY</div>` +
+        `<div style="color:${PAPER};font-size:13px;padding-top:3px;">${esc(delivery.label)}</div>` +
+        `</td><td valign="top" align="right" style="border-top:1px solid ${HAIR};padding:11px 2px;font-family:${MONO};color:${PAPER};font-size:13px;font-weight:bold;">${esc(feeOf(delivery.fee))}</td></tr>`
+      : '') +
     `</table></td></tr>`;
   const step = (n: string, body: string) =>
     `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 12px;"><tr>` +
@@ -179,10 +202,10 @@ Confirm the claim in the Supabase dashboard once the payment lands.`;
     `<tr><td style="padding:0;">` +
     step('01', `Scan the QR and pay exactly <b>${esc(total)}</b>.`) +
     step('02', 'Screenshot the receipt.') +
-    step('03', 'Reply to this email with the screenshot. We confirm, then we ship.') +
+    step('03', `Reply to this email with the screenshot. We confirm, then we ${meet ? 'set the meetup' : 'ship'}.`) +
     `</td></tr>` +
-    text(`${esc(total)} covers the records. Shipping is extra: Lalamove or LBC, paid by you, unless you asked for a Quezon City meetup.`, 12, DIMC, 0) +
-    label('SHIP TO', 24) +
+    text(esc(next), 12, DIMC, 0) +
+    label(placeLabel.toUpperCase(), 24) +
     text(br(shipTo), 13, PAPER, 0)
   );
 
@@ -196,7 +219,7 @@ Confirm the claim in the Supabase dashboard once the payment lands.`;
     text(`Reserved until ${esc(when)}. Unpaid, it goes back on sale after that.`, 12, DIMC, 0) +
     label('BUYER', 24) +
     text(`${esc(name)} &lt;${esc(buyer)}&gt;${phone ? `<br>${esc(phone)}` : ''}`, 13, PAPER, 0) +
-    label('SHIP TO', 18) +
+    label(placeLabel.toUpperCase(), 18) +
     text(br(address), 13, PAPER, 18) +
     text('Confirm the claim in the Supabase dashboard once the payment lands.', 12, DIMC, 0)
   );

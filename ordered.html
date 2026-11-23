@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex">
 <title>INODERECORDS · order placed</title>
 <link rel="icon" href="brand/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="style.css?v=ca499008">
+<link rel="stylesheet" href="style.css?v=c6918bcc">
 </head>
 <body>
 
@@ -34,9 +34,9 @@
     <ol class="done__steps">
       <li>Pay exactly <span data-total></span> with the QR.</li>
       <li>Screenshot the receipt.</li>
-      <li>Reply to your confirmation email with the screenshot. We confirm, then we ship. Can’t find the email? Check spam, or send it to <a class="done__mail" data-mail href="./">the shop address</a>.</li>
+      <li>Reply to your confirmation email with the screenshot. We confirm by email. Can’t find the email? Check spam, or send it to <a class="done__mail" data-mail href="./">the shop address</a>.</li>
     </ol>
-    <p class="done__ship">The total covers the records. Shipping is extra: Lalamove or LBC, paid by you, unless you asked for a Quezon City meetup.</p>
+    <p class="done__ship" data-next>We’ll email you the delivery details.</p>
   </section>
 
   <section data-noorder hidden>
@@ -83,6 +83,19 @@
     li.appendChild(what);
     li.appendChild(span('done__item-px', it.price || ''));
     ul.appendChild(li);
+  }
+  var dv = o.delivery;
+  if (dv && dv.label) {
+    var dl = document.createElement('li');
+    dl.className = 'done__item--ship';
+    var dw = document.createElement('div');
+    dw.className = 'done__item-what';
+    dw.appendChild(span('done__item-detail', 'Delivery'));
+    dw.appendChild(span('done__item-album', dv.label));
+    dl.appendChild(dw);
+    dl.appendChild(span('done__item-px', dv.fee || ''));
+    ul.appendChild(dl);
+    if (dv.next) document.querySelector('[data-next]').textContent = dv.next;
   }
   var ts = document.querySelectorAll('[data-total]');
   for (var j = 0; j < ts.length; j++) ts[j].textContent = o.total || '';

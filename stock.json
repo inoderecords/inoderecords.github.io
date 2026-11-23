@@ -1,10 +1,44 @@
 {
   "contact": {
     "page": "https://www.facebook.com/inoderecords",
-    "shipping": "Ships from Quezon City via Lalamove or LBC, shouldered by the buyer.",
-    "meetup": "Meet-up possible around Quezon City.",
+    "shipping": "Ships nationwide via J&T, or same-day Lalamove in Metro Manila.",
+    "meetup": "Free meetup at SM Megamall, SM City Grand Central or SM North EDSA.",
     "updated": "2026-10-27"
   },
+  "delivery": [
+    {
+      "id": "meetup",
+      "label": "Meetup",
+      "fee": 0,
+      "note": "SM Megamall, SM City Grand Central or SM North EDSA.",
+      "next": "Meetup is free. We’ll email you to set the day and time at SM Megamall, SM City Grand Central or SM North EDSA."
+    },
+    {
+      "id": "jt-mm",
+      "label": "J&T · Metro Manila",
+      "fee": 120,
+      "next": "Ships via J&T. We’ll email you the tracking number once it’s sent."
+    },
+    {
+      "id": "jt-luzon",
+      "label": "J&T · Rest of Luzon",
+      "fee": 170,
+      "next": "Ships via J&T. We’ll email you the tracking number once it’s sent."
+    },
+    {
+      "id": "jt-vismin",
+      "label": "J&T · Visayas and Mindanao",
+      "fee": 200,
+      "next": "Ships via J&T. We’ll email you the tracking number once it’s sent."
+    },
+    {
+      "id": "lalamove",
+      "label": "Lalamove · same day, Metro Manila",
+      "fee": null,
+      "note": "We book it and email you the exact fee.",
+      "next": "Same-day Lalamove, fee paid by you. We’ll email you the exact fee when we book it. Pay it with the same QR."
+    }
+  ],
   "records": [
     {
       "id": "charli-lp",

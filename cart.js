@@ -13,6 +13,13 @@
         url: document.body.getAttribute("data-claim-url") || "",
         key: document.body.getAttribute("data-claim-key") || ""
     };
+    var WAYS = [];
+    try {
+        WAYS = JSON.parse((document.getElementById("delivery") || {}).textContent || "[]") || [];
+    } catch (e) {
+        WAYS = [];
+    }
+    var ship = null;
     var recs = {};
     var order = [];
     var lis = document.querySelectorAll(".rec[data-title]");
@@ -80,6 +87,20 @@
     var copies = function(k) {
         return k > 1 ? " · " + k + " copies" : "";
     };
+    var feeText = function(d) {
+        return d.fee === 0 ? "Free" : d.fee === null ? "Paid by you" : peso(d.fee);
+    };
+    var way = function() {
+        for (var i = 0; i < WAYS.length; i++) if (WAYS[i].id === ship) return WAYS[i];
+        return null;
+    };
+    var grand = function() {
+        var d = way();
+        return total() + (d && typeof d.fee === "number" ? d.fee : 0);
+    };
+    var radio = function(d) {
+        return '<label class="cart__way"><input type="radio" name="ship" value="' + esc(d.id) + '" required>' + '<span class="cart__way-what"><span class="cart__way-name">' + esc(d.label) + "</span>" + (d.note ? '<span class="cart__way-note">' + esc(d.note) + "</span>" : "") + "</span>" + '<span class="cart__way-fee">' + esc(feeText(d)) + "</span></label>";
+    };
     var topbar = document.querySelector(".bar");
     var icon = document.createElement("button");
     icon.type = "button";
@@ -95,7 +116,7 @@
     box.className = "cart";
     box.hidden = true;
     box.setAttribute("aria-label", "Cart");
-    box.innerHTML = '<div class="cart__head"><span class="cart__title" data-cart-n>Cart</span>' + '<button class="cart__close" type="button">Close</button></div>' + '<p class="cart__empty" hidden>Your cart is empty.</p>' + '<form class="cart__panel" method="POST">' + '<input type="text" name="_honey" class="order__hp" tabindex="-1" autocomplete="off">' + '<p class="cart__note" data-note hidden role="status"></p>' + '<ul class="cart__items"></ul>' + '<div class="cart__sum"><span>Total</span><span data-cart-total></span></div>' + '<p class="cart__ship">Plus shipping: Lalamove or LBC, paid by you. Or meet up in Quezon City.</p>' + '<div class="cart__fields">' + field("cart-em", "Email", '<input class="order__email" id="cart-em" type="email" name="email" required ' + 'maxlength="254" autocomplete="email" placeholder="you@gmail.com">', "Your order confirmation goes here.") + field("cart-nm", "Name", '<input class="order__email" id="cart-nm" type="text" name="name" required ' + 'maxlength="120" autocomplete="name" placeholder="Juan Dela Cruz">') + field("cart-ph", "Mobile number", '<input class="order__email" id="cart-ph" type="tel" name="phone" required ' + 'inputmode="tel" autocomplete="tel" pattern="[0-9+ \\-]{7,20}" ' + 'title="A mobile number, like 0917 123 4567" placeholder="0917 123 4567">', "For the courier.") + field("cart-ad", "Delivery address", '<textarea class="order__email order__area" id="cart-ad" name="address" required ' + 'maxlength="500" autocomplete="street-address" rows="3" ' + 'placeholder="Street, barangay, city"></textarea>', "Meeting up in Quezon City instead? Write “QC meetup”.") + "</div>" + '<button class="btn btn--buy order__send" type="submit">Place order</button>' + '<p class="order__fine">Your records are reserved for 24 hours while you pay.</p>' + "</form>";
+    box.innerHTML = '<div class="cart__head"><span class="cart__title" data-cart-n>Cart</span>' + '<button class="cart__close" type="button">Close</button></div>' + '<p class="cart__empty" hidden>Your cart is empty.</p>' + '<form class="cart__panel" method="POST">' + '<input type="text" name="_honey" class="order__hp" tabindex="-1" autocomplete="off">' + '<p class="cart__note" data-note hidden role="status"></p>' + '<ul class="cart__items"></ul>' + (WAYS.length ? '<fieldset class="cart__ways"><legend class="order__label">Delivery</legend>' + WAYS.map(radio).join("") + "</fieldset>" : "") + '<div class="cart__sum">' + (WAYS.length ? '<div class="cart__line"><span>Records</span><span data-cart-sub></span></div>' + '<div class="cart__line"><span>Delivery</span><span data-cart-ship>Choose above</span></div>' : "") + '<div class="cart__line cart__line--total"><span>Total</span><span data-cart-total></span></div></div>' + '<div class="cart__fields">' + field("cart-em", "Email", '<input class="order__email" id="cart-em" type="email" name="email" required ' + 'maxlength="254" autocomplete="email" placeholder="you@gmail.com">', "Your order confirmation goes here.") + field("cart-nm", "Name", '<input class="order__email" id="cart-nm" type="text" name="name" required ' + 'maxlength="120" autocomplete="name" placeholder="Juan Dela Cruz">') + field("cart-ph", "Mobile number", '<input class="order__email" id="cart-ph" type="tel" name="phone" required ' + 'inputmode="tel" autocomplete="tel" pattern="[0-9+ \\-]{7,20}" ' + 'title="A mobile number, like 0917 123 4567" placeholder="0917 123 4567">', "For the courier or the meetup.") + field("cart-ad", "Delivery address", '<textarea class="order__email order__area" id="cart-ad" name="address" required ' + 'maxlength="500" autocomplete="street-address" rows="3" ' + 'placeholder="Street, barangay, city"></textarea>') + "</div>" + '<button class="btn btn--buy order__send" type="submit">Place order</button>' + '<p class="order__fine">Your records are reserved for 24 hours while you pay.</p>' + "</form>";
     document.body.appendChild(box);
     var badge = icon.querySelector("[data-cart-badge]");
     var panel = box.querySelector(".cart__panel");
@@ -106,6 +127,19 @@
     var note = box.querySelector("[data-note]");
     var send = box.querySelector(".order__send");
     var closer = box.querySelector(".cart__close");
+    var subEl = box.querySelector("[data-cart-sub]");
+    var shipEl = box.querySelector("[data-cart-ship]");
+    var adEl = box.querySelector("#cart-ad");
+    var adLabel = box.querySelector('label[for="cart-ad"]');
+    panel.addEventListener("change", function(e) {
+        if (!e.target || e.target.name !== "ship") return;
+        ship = e.target.value;
+        var meet = ship === "meetup";
+        adLabel.textContent = meet ? "Meetup spot and time" : "Delivery address";
+        adEl.placeholder = meet ? "Which mall, and what days and times work for you" : "Street, barangay, city";
+        adEl.setAttribute("autocomplete", meet ? "off" : "street-address");
+        render();
+    });
     function setOpen(open) {
         box.hidden = !open;
         icon.setAttribute("aria-expanded", open ? "true" : "false");
@@ -183,7 +217,10 @@
         empty.hidden = true;
         panel.hidden = false;
         nEl.textContent = "Cart · " + (n === 1 ? "1 record" : n + " records");
-        tEl.textContent = peso(total());
+        var d = way();
+        if (subEl) subEl.textContent = peso(total());
+        if (shipEl) shipEl.textContent = d ? feeText(d) : "Choose above";
+        tEl.textContent = peso(grand());
         var rows = "";
         for (var i = 0; i < order.length; i++) {
             var r = recs[order[i]];
@@ -271,7 +308,9 @@
             if (k) lines.push(r.title + (k > 1 ? " ×" + k : "") + " · " + peso(r.price * k));
         }
         var what = cart.length === 1 ? recs[cart[0]].title : cart.length + " records";
-        var reply = "We received your order, " + ino + ": " + lines.join("; ") + ". Total " + peso(total()) + ". " + "Your records are reserved for 24 hours while you pay. " + "To pay, open " + NEXT + " in the browser you ordered from and scan the QR with GCash, Maya or any bank app. " + "Then send your payment screenshot to the shop email shown on that page. " + "Shipping is extra: Lalamove or LBC, paid by you, unless you asked for a Quezon City meetup. INODERECORDS · Quezon City";
+        var d = way();
+        var dText = d ? d.label + " · " + feeText(d) : "";
+        var reply = "We received your order, " + ino + ": " + lines.join("; ") + (dText ? ". Delivery: " + dText : "") + ". Total " + peso(grand()) + ". " + "Your records are reserved for 24 hours while you pay. " + "To pay, open " + NEXT + " in the browser you ordered from and scan the QR with GCash, Maya or any bank app. " + "Then send your payment screenshot to the shop email shown on that page. " + (d ? d.next + " " : "") + "INODERECORDS · Quezon City";
         var add = function(n, v) {
             var inp = document.createElement("input");
             inp.type = "hidden";
@@ -280,24 +319,31 @@
             inp.setAttribute("data-gen", "");
             panel.appendChild(inp);
         };
-        add("_subject", "Order · " + what + " · " + peso(total()) + " · " + ino);
+        add("_subject", "Order · " + what + " · " + peso(grand()) + " · " + ino);
         add("_template", "table");
         add("_next", NEXT);
         add("_autoresponse", reply);
         add("order", ino);
         add("records", lines.join("\n"));
-        add("total", peso(total()));
+        if (dText) add("delivery", dText);
+        add("total", peso(grand()));
         panel.setAttribute("action", ACTION);
         return lines;
     }
     function sendOff(ino, until) {
         var at = Date.now();
         var u = until ? Date.parse(until) : NaN;
+        var d = way();
         try {
             localStorage.setItem("inode.order", JSON.stringify({
                 ino: ino,
                 items: itemsOf(),
-                total: peso(total()),
+                delivery: d ? {
+                    label: d.label,
+                    fee: feeText(d),
+                    next: d.next
+                } : null,
+                total: peso(grand()),
                 at: at,
                 until: isNaN(u) ? at + HOLD : u
             }));
@@ -344,7 +390,13 @@
                 ino: ino,
                 lines: lines,
                 rows: itemsOf(),
-                total: peso(total())
+                delivery: way() ? {
+                    id: way().id,
+                    label: way().label,
+                    fee: way().fee,
+                    next: way().next
+                } : null,
+                total: peso(grand())
             })
         }).then(function(r) {
             return r.json();
