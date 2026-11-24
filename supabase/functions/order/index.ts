@@ -15,7 +15,7 @@ const reply = (body: unknown, status = 200) =>
 
 const SITE = 'https://inoderecords.com';
 const PAGE = 'https://www.facebook.com/inoderecords';
-const QR = `${SITE}/pay/gcash.png`;
+const QR = `${SITE}/pay/gcash.png?v=color`;
 const HOLD_MS = 24 * 3600 * 1000;
 
 Deno.serve(async (req) => {

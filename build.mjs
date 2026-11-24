@@ -201,7 +201,7 @@ function thanksPage(contact, v, hasQr) {
     <p class="done__payhud">Pay exactly</p>
     <p class="done__total" data-total></p>
     <p class="done__until">We’re holding your records until <span data-until></span>, Philippine time. After that, unpaid records go back on the shelf.</p>
-${hasQr ? `    <div class="done__scan"><img class="done__qr" src="pay/gcash.png" alt="InstaPay QR code for INODERECORDS" width="240" height="240"></div>
+${hasQr ? `    <div class="done__scan"><img class="done__qr" src="${v.qr}" alt="InstaPay QR code for INODERECORDS" width="240" height="240"></div>
     <p class="done__paynote">InstaPay QR · works with GCash, Maya and bank apps<span data-pay></span></p>
     <p class="done__phone">On your phone? Screenshot this QR, then upload it from your app’s QR scanner.</p>
 ` : `    <p class="done__paynote">We email you the payment details from the shop address.</p>
@@ -329,7 +329,8 @@ const v = {
     cart: await stamped("cart.js"),
     fx: await stamped("fx.js"),
     tx: await stamped("tx.js"),
-    og: await stamped("brand/og.png")
+    og: await stamped("brand/og.png"),
+    qr: await stamped("pay/gcash.png")
 };
 
 const html = page(stock, art, disc, v);

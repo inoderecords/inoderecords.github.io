@@ -113,7 +113,7 @@ export function buyerMail(o: Order) {
     `<tr>${td(`padding:0 0 14px;font-size:48px;line-height:1.08;font-weight:800;letter-spacing:1px;color:${PAPER};`, total, ' class="big"')}</tr>` +
     prose(`We&#8217;re holding your records until <b style="color:${PAPER};">${esc(o.when)}</b>, Philippine time. After that, unpaid records go back on the shelf.`, '0 0 28px') +
     wrap(grid(`<tr><td bgcolor="#ffffff" style="background:#ffffff;padding:14px;">` +
-      `<img src="${o.site}/pay/gcash.png" width="200" height="200" alt="InstaPay QR, also attached to this email" ` +
+      `<img src="${o.site}/pay/gcash.png?v=color" width="200" height="200" alt="InstaPay QR, also attached to this email" ` +
       `style="display:block;width:200px;height:200px;border:0;font-family:${F};font-size:12px;color:${INK};"></td></tr>`, false)) +
     hud('INSTAPAY QR &#183; GCASH, MAYA AND BANK APPS', '14px 0 4px') +
     prose('On your phone? The QR is attached to this email too. Save it, then upload it in your app&#8217;s QR scanner.', '0 0 36px', 12, DIM) +

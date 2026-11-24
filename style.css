@@ -612,7 +612,7 @@ a { color: inherit; }
 
 .boot__line { margin: 0; }
 
-.boot__line--on { color: var(--blue); }
+.boot__line--on { margin-top: .3em; padding: 0 .55em; background: var(--paper); color: var(--ink); font-weight: 700; }
 
 .boot__rule { width: min(42vw, 320px); height: 1px; background: var(--ghost); margin-top: 14px; }
 
