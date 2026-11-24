@@ -671,7 +671,7 @@ a { color: inherit; }
   caret-color: var(--paper);
   background: none;
   border: 0;
-  border-bottom: 1px solid rgba(244, 243, 239, .34);
+  border-bottom: 1px solid var(--paper);
   border-radius: 0;
 }
 .order__email::placeholder { color: rgba(244, 243, 239, .36); }
