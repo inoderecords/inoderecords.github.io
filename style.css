@@ -1179,6 +1179,8 @@ select.order__email option { background: var(--ink); color: var(--paper); }
   font-size: var(--t-hud);
   line-height: 1.5;
 }
+.cart__hint.is-bad { color: var(--paper); }
+.cart__hint.is-bad::before { content: '× '; }
 .cart__panel .order__send { margin-top: 1.4em; width: 100%; }
 .cart__panel .order__fine { margin-top: .75em; text-align: center; }
 

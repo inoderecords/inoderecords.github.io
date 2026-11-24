@@ -49,7 +49,9 @@ Deno.serve(async (req) => {
   const lines = (input.lines ?? []).map((l) => String(l)).slice(0, 20);
   const total = String(input.total ?? '');
   const name = String(input.name ?? '').trim();
-  const phone = String(input.phone ?? '').trim();
+  const digits = String(input.phone ?? '').replace(/[\s().-]/g, '');
+  const local = /^(?:\+?63|0)?9\d{9}$/.test(digits) ? '0' + digits.replace(/^(?:\+?63|0)/, '') : '';
+  const phone = local ? `${local.slice(0, 4)} ${local.slice(4, 7)} ${local.slice(7)}` : '';
   const address = String(input.address ?? '').trim();
   const given: Row[] = (Array.isArray(input.rows) ? input.rows : []).slice(0, 20).map((r) => ({
     artist: String(r?.artist ?? '').slice(0, 200),
@@ -76,7 +78,7 @@ Deno.serve(async (req) => {
     !/^ino 0x[0-9A-F]{1,12}$/.test(ino) ||
     lines.some((l) => l.length > 300) || total.length > 40 ||
     !name || name.length > 120 || !address || address.length > 500 ||
-    (phone !== '' && !/^[0-9+().\s-]{7,20}$/.test(phone))
+    !phone
   ) {
     return reply({ ok: false, why: 'bad cart' }, 400);
   }

@@ -112,6 +112,13 @@
     icon.setAttribute("aria-label", "Cart");
     icon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">' + '<path d="M3 4h3l2.6 12H20"/><path d="M6.6 6h14.2l-1.9 8H8.3"/>' + '<rect x="9" y="18.6" width="2.6" height="2.6" fill="currentColor" stroke="none"/>' + '<rect x="16.4" y="18.6" width="2.6" height="2.6" fill="currentColor" stroke="none"/></svg>' + '<span class="bar__cart-n" data-cart-badge hidden></span>';
     if (topbar) topbar.appendChild(icon);
+    var HINT_PH = "So the courier can reach you.";
+    var BAD_PH = "Please use a PH mobile number, like 0917 123 4567.";
+    var mobile = function(v) {
+        var d = String(v || "").replace(/[\s().\-]/g, "");
+        if (/^\+?63\d{10}$/.test(d)) d = "0" + d.replace(/^\+?63/, ""); else if (/^9\d{9}$/.test(d)) d = "0" + d;
+        return /^09\d{9}$/.test(d) ? d.slice(0, 4) + " " + d.slice(4, 7) + " " + d.slice(7) : "";
+    };
     var field = function(id, label, control, hint) {
         return '<div class="cart__field"><label class="order__label" for="' + id + '">' + label + "</label>" + '<span class="cart__in">' + control + "</span>" + (hint ? '<p class="cart__hint">' + hint + "</p>" : "") + "</div>";
     };
@@ -119,7 +126,7 @@
     box.className = "cart";
     box.hidden = true;
     box.setAttribute("aria-label", "Cart");
-    box.innerHTML = '<div class="cart__head"><span class="cart__title" data-cart-n>Cart</span>' + '<button class="cart__close" type="button">Close</button></div>' + '<p class="cart__empty" hidden>Your cart is empty.</p>' + '<form class="cart__panel" method="POST">' + '<input type="text" name="_honey" class="order__hp" tabindex="-1" autocomplete="off">' + '<p class="cart__note" data-note hidden role="status"></p>' + '<ul class="cart__items"></ul>' + (WAYS.length ? '<div class="cart__field cart__dl"><label class="order__label" for="cart-dl">Delivery</label>' + '<span class="cart__in"><select class="order__email order__select" id="cart-dl" name="ship" required><option value="" disabled selected hidden>Choose one</option>' + WAYS.map(option).join("") + "</select></span></div>" + '<div class="cart__dm" hidden><p class="cart__dm-text" data-dm></p>' + '<a class="btn btn--buy cart__dm-go" href="' + esc(FB) + '" target="_blank" rel="noopener">Message us</a></div>' : "") + '<div class="cart__order">' + '<div class="cart__sum">' + (WAYS.length ? '<div class="cart__line"><span>Records</span><span data-cart-sub></span></div>' + '<div class="cart__line"><span>Delivery</span><span data-cart-ship>Choose above</span></div>' : "") + '<div class="cart__line cart__line--total"><span>Total</span><span data-cart-total></span></div></div>' + '<div class="cart__fields">' + field("cart-em", "Email", '<input class="order__email" id="cart-em" type="email" name="email" required ' + 'maxlength="254" autocomplete="email" placeholder="you@gmail.com">', "We’ll send your order confirmation here.") + field("cart-nm", "Name", '<input class="order__email" id="cart-nm" type="text" name="name" required ' + 'maxlength="120" autocomplete="name" placeholder="Juan Dela Cruz">') + field("cart-ph", "Mobile number", '<input class="order__email" id="cart-ph" type="tel" name="phone" required ' + 'inputmode="tel" autocomplete="tel" pattern="[0-9+ \\-]{7,20}" ' + 'title="A mobile number, like 0917 123 4567" placeholder="0917 123 4567">', "So the courier can reach you.") + field("cart-ad", "Delivery address", '<textarea class="order__email order__area" id="cart-ad" name="address" required ' + 'maxlength="500" autocomplete="street-address" rows="3" ' + 'placeholder="Street, barangay, city"></textarea>') + "</div>" + '<button class="btn btn--buy order__send" type="submit"><span class="order__send-t">Place order</span><i class="order__bar" aria-hidden="true"></i></button>' + '<p class="order__fine">We’ll hold your records for 24 hours while you pay.</p>' + "</div></form>";
+    box.innerHTML = '<div class="cart__head"><span class="cart__title" data-cart-n>Cart</span>' + '<button class="cart__close" type="button">Close</button></div>' + '<p class="cart__empty" hidden>Your cart is empty.</p>' + '<form class="cart__panel" method="POST">' + '<input type="text" name="_honey" class="order__hp" tabindex="-1" autocomplete="off">' + '<p class="cart__note" data-note hidden role="status"></p>' + '<ul class="cart__items"></ul>' + (WAYS.length ? '<div class="cart__field cart__dl"><label class="order__label" for="cart-dl">Delivery</label>' + '<span class="cart__in"><select class="order__email order__select" id="cart-dl" name="ship" required><option value="" disabled selected hidden>Choose one</option>' + WAYS.map(option).join("") + "</select></span></div>" + '<div class="cart__dm" hidden><p class="cart__dm-text" data-dm></p>' + '<a class="btn btn--buy cart__dm-go" href="' + esc(FB) + '" target="_blank" rel="noopener">Message us</a></div>' : "") + '<div class="cart__order">' + '<div class="cart__sum">' + (WAYS.length ? '<div class="cart__line"><span>Records</span><span data-cart-sub></span></div>' + '<div class="cart__line"><span>Delivery</span><span data-cart-ship>Choose above</span></div>' : "") + '<div class="cart__line cart__line--total"><span>Total</span><span data-cart-total></span></div></div>' + '<div class="cart__fields">' + field("cart-em", "Email", '<input class="order__email" id="cart-em" type="email" name="email" required ' + 'maxlength="254" autocomplete="email" placeholder="you@gmail.com">', "We’ll send your order confirmation here.") + field("cart-nm", "Name", '<input class="order__email" id="cart-nm" type="text" name="name" required ' + 'maxlength="120" autocomplete="name" placeholder="Juan Dela Cruz">') + field("cart-ph", "Mobile number", '<input class="order__email" id="cart-ph" type="tel" name="phone" required ' + 'inputmode="tel" autocomplete="tel" maxlength="20" placeholder="0917 123 4567">', HINT_PH) + field("cart-ad", "Delivery address", '<textarea class="order__email order__area" id="cart-ad" name="address" required ' + 'maxlength="500" autocomplete="street-address" rows="3" ' + 'placeholder="Street, barangay, city"></textarea>') + "</div>" + '<button class="btn btn--buy order__send" type="submit"><span class="order__send-t">Place order</span><i class="order__bar" aria-hidden="true"></i></button>' + '<p class="order__fine">We’ll hold your records for 24 hours while you pay.</p>' + "</div></form>";
     document.body.appendChild(box);
     var badge = icon.querySelector("[data-cart-badge]");
     var panel = box.querySelector(".cart__panel");
@@ -136,6 +143,29 @@
     var dmBox = box.querySelector(".cart__dm");
     var dmText = box.querySelector("[data-dm]");
     var orderBox = box.querySelector(".cart__order");
+    var phone = box.querySelector("#cart-ph");
+    var phoneHint = phone.parentNode.parentNode.querySelector(".cart__hint");
+    function checkPhone(show, tidy) {
+        var v = phone.value.trim();
+        var ok = mobile(v);
+        var bad = !!v && !ok;
+        phone.setCustomValidity(bad ? BAD_PH : "");
+        if (show || !bad) {
+            phoneHint.textContent = bad ? BAD_PH : HINT_PH;
+            phoneHint.classList.toggle("is-bad", bad);
+        }
+        if (tidy && ok && phone.value !== ok) phone.value = ok;
+        return !bad;
+    }
+    phone.addEventListener("input", function() {
+        checkPhone(phoneHint.classList.contains("is-bad"), false);
+    });
+    phone.addEventListener("change", function() {
+        checkPhone(true, true);
+    });
+    phone.addEventListener("invalid", function() {
+        if (phone.value.trim()) checkPhone(true, false);
+    });
     panel.addEventListener("change", function(e) {
         if (!e.target || e.target.id !== "cart-dl") return;
         ship = e.target.value || null;
@@ -419,7 +449,7 @@
                 items: items,
                 buyer: value("#cart-em"),
                 name: value("#cart-nm"),
-                phone: value("#cart-ph"),
+                phone: mobile(value("#cart-ph")) || value("#cart-ph"),
                 address: value("#cart-ad"),
                 ino: ino,
                 lines: lines,
