@@ -14,6 +14,7 @@ const reply = (body: unknown, status = 200) =>
   });
 
 const SITE = 'https://inoderecords.com';
+const PAGE = 'https://www.facebook.com/inoderecords';
 const QR = `${SITE}/pay/gcash.png`;
 const HOLD_MS = 24 * 3600 * 1000;
 
@@ -104,6 +105,7 @@ Deno.serve(async (req) => {
       .map((l) => ({ artist: l, album: '', detail: '', price: '', art: '' }));
   const order: Order = {
     site: SITE,
+    page: PAGE,
     ino,
     total,
     when,

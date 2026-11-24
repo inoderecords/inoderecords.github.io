@@ -2,6 +2,7 @@ export type Row = { artist: string; album: string; detail: string; price: string
 export type Way = { label: string; fee: number | null; next: string };
 export type Order = {
   site: string;
+  page: string;
   ino: string;
   total: string;
   when: string;
@@ -127,7 +128,7 @@ export function buyerMail(o: Order) {
     prose(esc(next), '26px 0 0', 13) +
     hud('SHIP TO', '30px 0 8px') +
     prose(br(shipTo), '0', 13, PAPER) +
-    foot(o, 'Questions? Just reply to this email and we&#8217;ll help.'));
+    foot(o, `Questions? <a href="${esc(o.page)}" style="color:${PAPER};text-decoration:underline;">Message us on Facebook</a>, or just reply to this email. We&#8217;re happy to help.`));
   const what = o.rows.map((r) => [r.artist, r.album, r.detail, r.price].filter(Boolean).join(' · ')).join('\n');
   const dLine = o.delivery ? `\nDelivery: ${o.delivery.label} · ${feeOf(o.delivery.fee)}` : '';
   const text = `Thanks for your order! Order number: ${o.ino}
@@ -148,7 +149,7 @@ ${next}
 Ship to
 ${shipTo}
 
-Questions? Just reply to this email and we’ll help.
+Questions? Message us on Facebook (${o.page}), or just reply to this email. We’re happy to help.
 INODERECORDS · Quezon City
 ${o.site}`;
   return { html, text };
