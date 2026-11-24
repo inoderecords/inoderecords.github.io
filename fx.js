@@ -95,7 +95,7 @@
             }
             requestAnimationFrame(tick);
         }
-        guard = setTimeout(end, ms + 600);
+        guard = setTimeout(end, ms + 120);
         requestAnimationFrame(tick);
         return {
             end: end
