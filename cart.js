@@ -20,6 +20,7 @@
         WAYS = [];
     }
     var ship = null;
+    var FX = window.INODE_FX || null;
     var FB = (document.querySelector(".bar__cta") || {}).href || "";
     var recs = {};
     var order = [];
@@ -32,6 +33,7 @@
             artist: li.getAttribute("data-artist") || li.getAttribute("data-title"),
             album: li.getAttribute("data-album") || "",
             detail: li.getAttribute("data-detail") || "",
+            art: li.getAttribute("data-art") || "",
             price: parseInt(li.getAttribute("data-price"), 10) || 0,
             shelf: parseInt(li.getAttribute("data-qty"), 10) || 1,
             qty: parseInt(li.getAttribute("data-qty"), 10) || 1,
@@ -111,13 +113,13 @@
     icon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">' + '<path d="M3 4h3l2.6 12H20"/><path d="M6.6 6h14.2l-1.9 8H8.3"/>' + '<rect x="9" y="18.6" width="2.6" height="2.6" fill="currentColor" stroke="none"/>' + '<rect x="16.4" y="18.6" width="2.6" height="2.6" fill="currentColor" stroke="none"/></svg>' + '<span class="bar__cart-n" data-cart-badge hidden></span>';
     if (topbar) topbar.appendChild(icon);
     var field = function(id, label, control, hint) {
-        return '<div class="cart__field"><label class="order__label" for="' + id + '">' + label + "</label>" + control + (hint ? '<p class="cart__hint">' + hint + "</p>" : "") + "</div>";
+        return '<div class="cart__field"><label class="order__label" for="' + id + '">' + label + "</label>" + '<span class="cart__in">' + control + "</span>" + (hint ? '<p class="cart__hint">' + hint + "</p>" : "") + "</div>";
     };
     var box = document.createElement("aside");
     box.className = "cart";
     box.hidden = true;
     box.setAttribute("aria-label", "Cart");
-    box.innerHTML = '<div class="cart__head"><span class="cart__title" data-cart-n>Cart</span>' + '<button class="cart__close" type="button">Close</button></div>' + '<p class="cart__empty" hidden>Your cart is empty.</p>' + '<form class="cart__panel" method="POST">' + '<input type="text" name="_honey" class="order__hp" tabindex="-1" autocomplete="off">' + '<p class="cart__note" data-note hidden role="status"></p>' + '<ul class="cart__items"></ul>' + (WAYS.length ? '<div class="cart__field cart__dl"><label class="order__label" for="cart-dl">Delivery</label>' + '<select class="order__email order__select" id="cart-dl" name="ship" required><option value="">Choose one</option>' + WAYS.map(option).join("") + "</select></div>" + '<div class="cart__dm" hidden><p class="cart__dm-text" data-dm></p>' + '<a class="btn btn--buy cart__dm-go" href="' + esc(FB) + '" target="_blank" rel="noopener">Message us</a></div>' : "") + '<div class="cart__order">' + '<div class="cart__sum">' + (WAYS.length ? '<div class="cart__line"><span>Records</span><span data-cart-sub></span></div>' + '<div class="cart__line"><span>Delivery</span><span data-cart-ship>Choose above</span></div>' : "") + '<div class="cart__line cart__line--total"><span>Total</span><span data-cart-total></span></div></div>' + '<div class="cart__fields">' + field("cart-em", "Email", '<input class="order__email" id="cart-em" type="email" name="email" required ' + 'maxlength="254" autocomplete="email" placeholder="you@gmail.com">', "We’ll send your order confirmation here.") + field("cart-nm", "Name", '<input class="order__email" id="cart-nm" type="text" name="name" required ' + 'maxlength="120" autocomplete="name" placeholder="Juan Dela Cruz">') + field("cart-ph", "Mobile number", '<input class="order__email" id="cart-ph" type="tel" name="phone" required ' + 'inputmode="tel" autocomplete="tel" pattern="[0-9+ \\-]{7,20}" ' + 'title="A mobile number, like 0917 123 4567" placeholder="0917 123 4567">', "So the courier can reach you.") + field("cart-ad", "Delivery address", '<textarea class="order__email order__area" id="cart-ad" name="address" required ' + 'maxlength="500" autocomplete="street-address" rows="3" ' + 'placeholder="Street, barangay, city"></textarea>') + "</div>" + '<button class="btn btn--buy order__send" type="submit">Place order</button>' + '<p class="order__fine">We’ll hold your records for 24 hours while you pay.</p>' + "</div></form>";
+    box.innerHTML = '<div class="cart__head"><span class="cart__title" data-cart-n>Cart</span>' + '<button class="cart__close" type="button">Close</button></div>' + '<p class="cart__empty" hidden>Your cart is empty.</p>' + '<form class="cart__panel" method="POST">' + '<input type="text" name="_honey" class="order__hp" tabindex="-1" autocomplete="off">' + '<p class="cart__note" data-note hidden role="status"></p>' + '<ul class="cart__items"></ul>' + (WAYS.length ? '<div class="cart__field cart__dl"><label class="order__label" for="cart-dl">Delivery</label>' + '<span class="cart__in"><select class="order__email order__select" id="cart-dl" name="ship" required><option value="">Choose one</option>' + WAYS.map(option).join("") + "</select></span></div>" + '<div class="cart__dm" hidden><p class="cart__dm-text" data-dm></p>' + '<a class="btn btn--buy cart__dm-go" href="' + esc(FB) + '" target="_blank" rel="noopener">Message us</a></div>' : "") + '<div class="cart__order">' + '<div class="cart__sum">' + (WAYS.length ? '<div class="cart__line"><span>Records</span><span data-cart-sub></span></div>' + '<div class="cart__line"><span>Delivery</span><span data-cart-ship>Choose above</span></div>' : "") + '<div class="cart__line cart__line--total"><span>Total</span><span data-cart-total></span></div></div>' + '<div class="cart__fields">' + field("cart-em", "Email", '<input class="order__email" id="cart-em" type="email" name="email" required ' + 'maxlength="254" autocomplete="email" placeholder="you@gmail.com">', "We’ll send your order confirmation here.") + field("cart-nm", "Name", '<input class="order__email" id="cart-nm" type="text" name="name" required ' + 'maxlength="120" autocomplete="name" placeholder="Juan Dela Cruz">') + field("cart-ph", "Mobile number", '<input class="order__email" id="cart-ph" type="tel" name="phone" required ' + 'inputmode="tel" autocomplete="tel" pattern="[0-9+ \\-]{7,20}" ' + 'title="A mobile number, like 0917 123 4567" placeholder="0917 123 4567">', "So the courier can reach you.") + field("cart-ad", "Delivery address", '<textarea class="order__email order__area" id="cart-ad" name="address" required ' + 'maxlength="500" autocomplete="street-address" rows="3" ' + 'placeholder="Street, barangay, city"></textarea>') + "</div>" + '<button class="btn btn--buy order__send" type="submit"><span class="order__send-t">Place order</span><i class="order__bar" aria-hidden="true"></i></button>' + '<p class="order__fine">We’ll hold your records for 24 hours while you pay.</p>' + "</div></form>";
     document.body.appendChild(box);
     var badge = icon.querySelector("[data-cart-badge]");
     var panel = box.querySelector(".cart__panel");
@@ -127,6 +129,7 @@
     var empty = box.querySelector(".cart__empty");
     var note = box.querySelector("[data-note]");
     var send = box.querySelector(".order__send");
+    var sendT = send.querySelector(".order__send-t");
     var closer = box.querySelector(".cart__close");
     var subEl = box.querySelector("[data-cart-sub]");
     var shipEl = box.querySelector("[data-cart-ship]");
@@ -148,9 +151,15 @@
         render();
     });
     function setOpen(open) {
+        var was = !box.hidden;
         box.hidden = !open;
         icon.setAttribute("aria-expanded", open ? "true" : "false");
-        if (open) closer.focus();
+        if (!open) return;
+        if (!was && FX) FX.tune(box.getBoundingClientRect(), {
+            z: 41,
+            ms: 280
+        });
+        closer.focus();
     }
     icon.addEventListener("click", function() {
         setOpen(box.hidden);
@@ -165,15 +174,6 @@
             icon.focus();
         }
     });
-    function pop(el, cls) {
-        if (!el) return;
-        el.classList.remove(cls);
-        void el.offsetWidth;
-        el.classList.add(cls);
-        setTimeout(function() {
-            el.classList.remove(cls);
-        }, 480);
-    }
     for (var j = 0; j < order.length; j++) {
         (function(r) {
             var li = document.getElementById(r.id);
@@ -186,15 +186,20 @@
             b.className = "btn btn--buy cart__add";
             b.addEventListener("click", function() {
                 if (count(r.id) >= r.qty) return;
+                var had = cart.length;
                 cart.push(r.id);
                 save();
                 render();
-                pop(badge, "pop");
-                pop(icon, "jolt");
-                pop(b, "cart__add--flash");
-                b.textContent = "ADDED";
-                clearTimeout(b._added);
-                b._added = setTimeout(render, 1100);
+                if (!FX || FX.calm()) return;
+                badge.hidden = !had;
+                badge.textContent = had ? String(had) : "";
+                FX.flick(b, "is-blip", 360);
+                FX.decode(b, b.textContent, 360);
+                FX.trace(b, icon, function() {
+                    badge.hidden = !cart.length;
+                    FX.decode(badge, String(cart.length), 160);
+                    FX.flick(icon, "is-tear", 120);
+                });
             });
             r.btn = b;
             buy.appendChild(b);
@@ -207,6 +212,7 @@
             var k = count(r.id);
             var gone = r.qty <= 0;
             var full = !gone && k >= r.qty;
+            clearInterval(r.btn._dec);
             r.btn.textContent = gone ? "SOLD" : k === 0 ? "ADD TO CART" : full ? "IN CART" : "IN CART · ADD ANOTHER";
             r.btn.disabled = gone || full;
             r.btn.classList.toggle("cart__add--in", !gone && k > 0);
@@ -215,6 +221,7 @@
             if (tag && gone) tag.textContent = "SOLD";
         }
         var n = cart.length;
+        clearInterval(badge._dec);
         badge.hidden = !n;
         badge.textContent = n;
         icon.setAttribute("aria-label", n ? "Cart, " + (n === 1 ? "1 record" : n + " records") : "Cart");
@@ -296,7 +303,8 @@
                 artist: r.artist,
                 album: r.album,
                 detail: r.detail + copies(k),
-                price: peso(r.price * k)
+                price: peso(r.price * k),
+                art: r.art
             });
         }
         return out;
@@ -306,8 +314,21 @@
     function setBusy(on) {
         busy = on;
         send.disabled = on;
-        send.textContent = on ? "Placing order…" : "Place order";
+        send.classList.toggle("is-busy", on);
+        sendT.textContent = on ? "Placing order" : "Place order";
         panel.setAttribute("aria-busy", on ? "true" : "false");
+    }
+    function leave(go) {
+        var gone = false;
+        var once = function() {
+            if (gone) return;
+            gone = true;
+            go();
+        };
+        setTimeout(once, 1200);
+        if (FX) FX.decay({
+            done: once
+        }); else once();
     }
     function buildFields(ino) {
         var old = panel.querySelectorAll("[data-gen]");
@@ -437,17 +458,33 @@
             }
             if (res && res.ok === true && res.mailed === true) {
                 sendOff(ino, res.until);
-                window.location.assign("ordered.html");
+                leave(function() {
+                    window.location.assign("ordered.html");
+                });
                 return;
             }
             claimed = true;
             sendOff(ino, res && res.until);
-            panel.submit();
+            leave(function() {
+                panel.submit();
+            });
         }).catch(function() {
             claimed = true;
             sendOff(ino, "");
-            panel.submit();
+            leave(function() {
+                panel.submit();
+            });
         });
+    });
+    window.addEventListener("pageshow", function(e) {
+        if (!e.persisted) return;
+        if (FX) FX.sweep();
+        cart = load();
+        claimed = false;
+        setBusy(false);
+        setOpen(false);
+        render();
+        refreshAvail();
     });
     refreshAvail();
     render();

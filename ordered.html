@@ -7,7 +7,8 @@
 <meta name="robots" content="noindex">
 <title>INODERECORDS · order placed</title>
 <link rel="icon" href="brand/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="style.css?v=4d823b7f">
+<link rel="stylesheet" href="style.css?v=0c7d8d91">
+<script>try{var o=JSON.parse(localStorage.getItem('inode.order')||'null');if(o&&o.ino&&!o.seen&&Date.now()-(+o.at||0)<6e5&&!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches))document.documentElement.classList.add('tx');}catch(e){}</script>
 </head>
 <body>
 
@@ -28,7 +29,7 @@
     <p class="done__payhud">Pay exactly</p>
     <p class="done__total" data-total></p>
     <p class="done__until">We’re holding your records until <span data-until></span>, Philippine time. After that, unpaid records go back on the shelf.</p>
-    <img class="done__qr" src="pay/gcash.png" alt="InstaPay QR code for INODERECORDS" width="240" height="240">
+    <div class="done__scan"><img class="done__qr" src="pay/gcash.png" alt="InstaPay QR code for INODERECORDS" width="240" height="240"></div>
     <p class="done__paynote">InstaPay QR · works with GCash, Maya and bank apps<span data-pay></span></p>
     <p class="done__phone">On your phone? Screenshot this QR, then upload it from your app’s QR scanner.</p>
     <ol class="done__steps">
@@ -70,11 +71,26 @@
     s.textContent = text;
     return s;
   };
+  var art = function (src) {
+    if (src && src.indexOf('art/') === 0 && /^[A-Za-z0-9._-]+$/.test(src.slice(4))) {
+      var im = document.createElement('img');
+      im.className = 'done__cover';
+      im.src = src;
+      im.alt = '';
+      im.width = 52;
+      im.height = 52;
+      return im;
+    }
+    var b = span('done__cover done__cover--blank', '');
+    b.setAttribute('aria-hidden', 'true');
+    return b;
+  };
   var items = o.items && o.items.length ? o.items : [];
   var ul = document.querySelector('[data-items]');
   for (var i = 0; i < items.length; i++) {
     var it = items[i];
     var li = document.createElement('li');
+    li.appendChild(art(it.art));
     var what = document.createElement('div');
     what.className = 'done__item-what';
     what.appendChild(span('done__item-artist', it.artist || ''));
@@ -88,6 +104,7 @@
   if (dv && dv.label) {
     var dl = document.createElement('li');
     dl.className = 'done__item--ship';
+    dl.appendChild(art(''));
     var dw = document.createElement('div');
     dw.className = 'done__item-what';
     dw.appendChild(span('done__item-detail', 'Delivery'));
@@ -118,5 +135,7 @@
   }
 })();
 </script>
+<script src="fx.js?v=3226253b" defer></script>
+<script src="tx.js?v=84090619" defer></script>
 </body>
 </html>

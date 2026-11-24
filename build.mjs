@@ -164,7 +164,7 @@ function page(stock, art, disc, v) {
     const how = ORDER.endpoint ? [ "Order with your email", "Pay via GCash", "Reply with the screenshot, we ship" ] : [ "Message us on Facebook", "We send real photos of the actual copy", "Pay and we ship" ];
     const twice = r => records.filter(o => o.artist === r.artist).length > 1;
     const dots = records.map((r, i) => `          <li><button type="button" data-go="${i}"` + ` aria-label="${esc(r.artist)}, ${esc(r.album)}, ${esc(r.format)}, ${peso(r.price)}">` + `<i aria-hidden="true"></i>` + `<span class="crate__ix">${two(i + 1)}</span>` + `<span class="crate__who">${esc(r.artist)}${twice(r) ? ` · ${esc(r.format)}` : ""}</span>` + `<span class="crate__lead"></span>` + `<span class="crate__px">${peso(r.price)}</span>` + `</button></li>`).join("\n");
-    return `<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n<meta name="theme-color" content="#0a0a0a">\n<title>INODERECORDS · records in stock, Quezon City</title>\n<meta name="description" content="${esc(desc)}">\n\n<meta property="og:type" content="website">\n<meta property="og:title" content="INODERECORDS · ${n} sealed records in stock">\n<meta property="og:description" content="${esc(desc)}">\n<meta property="og:image" content="brand/og.png">\n<meta name="twitter:card" content="summary_large_image">\n\n<link rel="icon" href="brand/favicon.svg" type="image/svg+xml">\n<link rel="stylesheet" href="${v.css}">\n</head>\n<body${ORDER.claim.url ? ` data-claim-url="${esc(ORDER.claim.url)}" data-claim-key="${esc(ORDER.claim.key)}"` : ""}>\n\n<div class="scan" aria-hidden="true"></div>\n<div class="frame" aria-hidden="true"><i></i><i></i><i></i><i></i></div>\n\n<header class="bar">\n  <h1 class="bar__name" aria-label="INODERECORDS">${wordmark}</h1>\n  <a class="bar__cta" href="${esc(contact.page)}">Message us</a>\n</header>\n\n<main class="shop">\n\n  \n  <section class="crate" data-crate aria-roledescription="record crate">\n\n    <div class="crate__stage">\n      <canvas class="crate__canvas" aria-hidden="true"></canvas>\n    </div>\n\n    <div class="crate__deck">\n      \n      <p class="crate__prov" aria-hidden="true"><span data-prov-a></span><span data-prov-b></span></p>\n\n      <ol class="crate__list">\n${records.map((r, i) => card(r, contact, i, records, art, disc)).join("\n")}\n      </ol>\n\n      \n      <nav class="crate__nav" aria-label="Records">\n        <button class="crate__arrow" type="button" data-step="-1">\n          <span aria-hidden="true">&#8592;</span><span class="sr">Previous record</span>\n        </button>\n        <ol class="crate__dots">\n${dots}\n        </ol>\n        <p class="crate__pos" aria-hidden="true"><span data-pos>01</span> / ${two(records.length)}</p>\n        <button class="crate__arrow" type="button" data-step="1">\n          <span aria-hidden="true">&#8594;</span><span class="sr">Next record</span>\n        </button>\n      </nav>\n    </div>\n\n  </section>\n\n</main>\n\n\n<footer class="foot">\n  <p class="foot__how">\n${how.map(s => `    <span>${esc(s)}</span>`).join("\n")}\n  </p>\n  <p class="foot__line">\n    <span>${esc(contact.shipping)}</span>\n    <span>${esc(contact.meetup)}</span>\n    <span data-facts>${records.length} titles · ${n} copies · all sealed</span>\n    <span>Disc photos show the pressing, not your exact copy.</span>\n    <span>Cover art via Cover Art Archive.</span>\n  </p>\n</footer>\n\n<script src="${v.boot}" defer><\/script>\n<script src="${v.crate}" defer><\/script>\n${ORDER.endpoint ? `<script type="application/json" id="delivery">${deliveryJson}<\/script>\n<script src="${v.order}" defer><\/script>\n<script src="${v.cart}" defer><\/script>\n` : ""}</body>\n</html>\n`;
+    return `<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n<meta name="theme-color" content="#0a0a0a">\n<title>INODERECORDS · records in stock, Quezon City</title>\n<meta name="description" content="${esc(desc)}">\n\n<meta property="og:type" content="website">\n<meta property="og:title" content="INODERECORDS · ${n} sealed records in stock">\n<meta property="og:description" content="${esc(desc)}">\n<meta property="og:image" content="brand/og.png">\n<meta name="twitter:card" content="summary_large_image">\n\n<link rel="icon" href="brand/favicon.svg" type="image/svg+xml">\n<link rel="stylesheet" href="${v.css}">\n</head>\n<body${ORDER.claim.url ? ` data-claim-url="${esc(ORDER.claim.url)}" data-claim-key="${esc(ORDER.claim.key)}"` : ""}>\n\n<div class="scan" aria-hidden="true"></div>\n<div class="frame" aria-hidden="true"><i></i><i></i><i></i><i></i></div>\n\n<header class="bar">\n  <h1 class="bar__name" aria-label="INODERECORDS">${wordmark}</h1>\n  <a class="bar__cta" href="${esc(contact.page)}">Message us</a>\n</header>\n\n<main class="shop">\n\n  \n  <section class="crate" data-crate aria-roledescription="record crate">\n\n    <div class="crate__stage">\n      <canvas class="crate__canvas" aria-hidden="true"></canvas>\n    </div>\n\n    <div class="crate__deck">\n      \n      <p class="crate__prov" aria-hidden="true"><span data-prov-a></span><span data-prov-b></span></p>\n\n      <ol class="crate__list">\n${records.map((r, i) => card(r, contact, i, records, art, disc)).join("\n")}\n      </ol>\n\n      \n      <nav class="crate__nav" aria-label="Records">\n        <button class="crate__arrow" type="button" data-step="-1">\n          <span aria-hidden="true">&#8592;</span><span class="sr">Previous record</span>\n        </button>\n        <ol class="crate__dots">\n${dots}\n        </ol>\n        <p class="crate__pos" aria-hidden="true"><span data-pos>01</span> / ${two(records.length)}</p>\n        <button class="crate__arrow" type="button" data-step="1">\n          <span aria-hidden="true">&#8594;</span><span class="sr">Next record</span>\n        </button>\n      </nav>\n    </div>\n\n  </section>\n\n</main>\n\n\n<footer class="foot">\n  <p class="foot__how">\n${how.map(s => `    <span>${esc(s)}</span>`).join("\n")}\n  </p>\n  <p class="foot__line">\n    <span>${esc(contact.shipping)}</span>\n    <span>${esc(contact.meetup)}</span>\n    <span data-facts>${records.length} titles · ${n} copies · all sealed</span>\n    <span>Disc photos show the pressing, not your exact copy.</span>\n    <span>Cover art via Cover Art Archive.</span>\n  </p>\n</footer>\n\n<script src="${v.boot}" defer><\/script>\n<script src="${v.crate}" defer><\/script>\n${ORDER.endpoint ? `<script type="application/json" id="delivery">${deliveryJson}<\/script>\n<script src="${v.fx}" defer><\/script>\n<script src="${v.order}" defer><\/script>\n<script src="${v.cart}" defer><\/script>\n` : ""}</body>\n</html>\n`;
 }
 
 function thanksPage(contact, v, hasQr) {
@@ -180,6 +180,7 @@ function thanksPage(contact, v, hasQr) {
 <title>INODERECORDS · order placed</title>
 <link rel="icon" href="brand/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="${v.css}">
+<script>try{var o=JSON.parse(localStorage.getItem('inode.order')||'null');if(o&&o.ino&&!o.seen&&Date.now()-(+o.at||0)<6e5&&!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches))document.documentElement.classList.add('tx');}catch(e){}<\/script>
 </head>
 <body>
 
@@ -200,7 +201,7 @@ function thanksPage(contact, v, hasQr) {
     <p class="done__payhud">Pay exactly</p>
     <p class="done__total" data-total></p>
     <p class="done__until">We’re holding your records until <span data-until></span>, Philippine time. After that, unpaid records go back on the shelf.</p>
-${hasQr ? `    <img class="done__qr" src="pay/gcash.png" alt="InstaPay QR code for INODERECORDS" width="240" height="240">
+${hasQr ? `    <div class="done__scan"><img class="done__qr" src="pay/gcash.png" alt="InstaPay QR code for INODERECORDS" width="240" height="240"></div>
     <p class="done__paynote">InstaPay QR · works with GCash, Maya and bank apps<span data-pay></span></p>
     <p class="done__phone">On your phone? Screenshot this QR, then upload it from your app’s QR scanner.</p>
 ` : `    <p class="done__paynote">We email you the payment details from the shop address.</p>
@@ -243,11 +244,26 @@ ${hasQr ? `    <img class="done__qr" src="pay/gcash.png" alt="InstaPay QR code f
     s.textContent = text;
     return s;
   };
+  var art = function (src) {
+    if (src && src.indexOf('art/') === 0 && /^[A-Za-z0-9._-]+$/.test(src.slice(4))) {
+      var im = document.createElement('img');
+      im.className = 'done__cover';
+      im.src = src;
+      im.alt = '';
+      im.width = 52;
+      im.height = 52;
+      return im;
+    }
+    var b = span('done__cover done__cover--blank', '');
+    b.setAttribute('aria-hidden', 'true');
+    return b;
+  };
   var items = o.items && o.items.length ? o.items : [];
   var ul = document.querySelector('[data-items]');
   for (var i = 0; i < items.length; i++) {
     var it = items[i];
     var li = document.createElement('li');
+    li.appendChild(art(it.art));
     var what = document.createElement('div');
     what.className = 'done__item-what';
     what.appendChild(span('done__item-artist', it.artist || ''));
@@ -261,6 +277,7 @@ ${hasQr ? `    <img class="done__qr" src="pay/gcash.png" alt="InstaPay QR code f
   if (dv && dv.label) {
     var dl = document.createElement('li');
     dl.className = 'done__item--ship';
+    dl.appendChild(art(''));
     var dw = document.createElement('div');
     dw.className = 'done__item-what';
     dw.appendChild(span('done__item-detail', 'Delivery'));
@@ -291,6 +308,8 @@ ${hasQr ? `    <img class="done__qr" src="pay/gcash.png" alt="InstaPay QR code f
   }
 })();
 <\/script>
+<script src="${v.fx}" defer><\/script>
+<script src="${v.tx}" defer><\/script>
 </body>
 </html>
 `;
@@ -307,7 +326,9 @@ const v = {
     boot: await stamped("boot.js"),
     crate: await stamped("crate.js"),
     order: await stamped("order.js"),
-    cart: await stamped("cart.js")
+    cart: await stamped("cart.js"),
+    fx: await stamped("fx.js"),
+    tx: await stamped("tx.js")
 };
 
 const html = page(stock, art, disc, v);
