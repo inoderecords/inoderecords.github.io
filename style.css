@@ -1133,7 +1133,8 @@ a { color: inherit; }
   background-repeat: no-repeat;
   cursor: pointer;
 }
-.order__select option { background: var(--ink); color: var(--paper); }
+select.order__email:invalid { color: rgba(244, 243, 239, .36); }
+select.order__email option { background: var(--ink); color: var(--paper); }
 .cart__dm { margin-top: 1.1em; display: grid; gap: 1em; }
 .cart__dm[hidden], .cart__order[hidden] { display: none; }
 .cart__dm-text {
