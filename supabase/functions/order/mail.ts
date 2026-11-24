@@ -119,8 +119,11 @@ export function buyerMail(o: Order) {
     prose('On your phone? The QR is attached to this email too. Save it, then upload it in your app&#8217;s QR scanner.', '0 0 36px', 12, DIM) +
     hud('HOW TO PAY', '0 0 14px') +
     wrap(grid(steps.map((s, i) => `<tr>` +
-      td(`padding:3px 14px 12px 0;font-size:11px;font-weight:700;letter-spacing:1px;color:${FAINT};`, `0${i + 1}`, ' valign="top" width="22"') +
-      td(`padding:0 0 12px;font-size:14px;line-height:1.6;color:${PAPER};`, s, ' valign="top"') +
+      `<td valign="top" width="32" style="padding:0 14px 14px 0;width:32px;">` +
+      grid(`<tr>${td(`width:32px;height:24px;font-size:12px;line-height:24px;font-weight:800;letter-spacing:1px;color:${INK};background:${PAPER};`,
+        `0${i + 1}`, ` width="32" height="24" align="center" valign="middle" bgcolor="${PAPER}"`)}</tr>`, false) +
+      `</td>` +
+      td(`padding:1px 0 14px;font-size:14px;line-height:1.6;color:${PAPER};`, s, ' valign="top"') +
       `</tr>`).join('')), '0 0 30px') +
     hud(`YOUR ORDER &#183; ${esc(o.ino)}`, '0 0 16px') +
     items(o) +
